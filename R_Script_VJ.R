@@ -11,29 +11,29 @@ file_path <- 'Fahrzeug/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv'
 # Read the CSV fil
 data <- read.csv(file_path, sep=';', header=TRUE)
 
-data_karosserie <- data %>%
-  group_by(Grouped_Column = substr(ID_Karosserie, 1, 2)) %>%
-  summarize(Count = n(),
-            FirstValue = first(ID_Karosserie))
-data_karosserie
-
-data_schaltung <- data %>%
-  group_by(Grouped_Column = str_extract(ID_Schaltung, "^[^-]+")) %>%
-  summarise(Count = n(),
-            FirstValue = first(ID_Schaltung))
-data_schaltung
-
-data_sitze <- data %>%
-  group_by(Grouped_Column = str_extract(ID_Sitze, "^[^-]+")) %>%
-  summarise(Count = n(),
-            FirstValue = first(ID_Sitze))
-data_sitze
-
-data_motor <- data %>%
-  group_by(Grouped_Column = str_extract(ID_Motor, "^[^-]+")) %>%
-  summarise(Count = n(),
-            FirstValue = first(ID_Motor))
-data_motor
+# data_karosserie <- data %>%
+#   group_by(Grouped_Column = substr(ID_Karosserie, 1, 2)) %>%
+#   summarize(Count = n(),
+#             FirstValue = first(ID_Karosserie))
+# data_karosserie
+# 
+# data_schaltung <- data %>%
+#   group_by(Grouped_Column = str_extract(ID_Schaltung, "^[^-]+")) %>%
+#   summarise(Count = n(),
+#             FirstValue = first(ID_Schaltung))
+# data_schaltung
+# 
+# data_sitze <- data %>%
+#   group_by(Grouped_Column = str_extract(ID_Sitze, "^[^-]+")) %>%
+#   summarise(Count = n(),
+#             FirstValue = first(ID_Sitze))
+# data_sitze
+# 
+# data_motor <- data %>%
+#   group_by(Grouped_Column = str_extract(ID_Motor, "^[^-]+")) %>%
+#   summarise(Count = n(),
+#             FirstValue = first(ID_Motor))
+# data_motor
 
 summarize_and_print <- function(data, columns) {
   for (col in columns) {
