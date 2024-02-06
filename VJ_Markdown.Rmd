@@ -1,14 +1,22 @@
-##### ADD LINES FOR ALL PACKAGES SO THAT ALL GET INSTALLED: I:E: 
-##### NEEDS TO WORK ON A FRESH START
-##### CREATE VISUALIZATION FOR EACH OEM WITH A data.tree https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html
+---
+title: "Valentin Markdown"
+output: html_document
+date: "2024-02-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 install.packages("tidyr")
 library(tidyr)
 library(dplyr)
 library(stringr)
 library(purrr)
+```
 
+
+```{r setup, include=FALSE}
 file_path <- 'Fahrzeug/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv'
-# Read the CSV fil
+# Read the CSV file
 data <- read.csv(file_path, sep=';', header=TRUE)
 
 # data_karosserie <- data %>%
@@ -35,14 +43,27 @@ columns_to_summarize <- c("ID_Karosserie", "ID_Schaltung", "ID_Sitze", "ID_Motor
 summarize_and_print(data, columns_to_summarize)
 
 
+file_path <- 'Komponente/Komponente/Bestandteile_Komponente_K4.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=';', header=TRUE)
 
+columns_to_summarize <- c("ID_Karosserie", "ID_Schaltung", "ID_Sitze", "ID_Motor")
 
+# Call the function
+summarize_and_print(data, columns_to_summarize)
+```
 
+Import data (should be Fabian is working on it)
+```{r}
 file_path <- 'Einzelteile/Einzelteil_T30.csv'
 # Read the CSV fil
 data <- read.csv(file_path, header=TRUE)
 
+```
 
+
+Function to delete .x and .y columns and add them below the original column
+```{r}
 cleaner_einzelteile <- function(data) {
   data$X <- NULL
   data$X1 <- NULL
@@ -65,10 +86,14 @@ cleaner_einzelteile <- function(data) {
     return(concatenated_data)
   }
 }
-
 cleandata <- cleaner_einzelteile(data)
+```
 
+Remove NA's (this should be generalized and added to main function).
+```{r}
 cleandata <- cleandata[!is.na(cleandata$ID_T30), ]
 
 #Delete columns only containing NAs
 cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
+```
+
