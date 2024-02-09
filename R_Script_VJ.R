@@ -2,10 +2,12 @@
 ##### NEEDS TO WORK ON A FRESH START
 ##### CREATE VISUALIZATION FOR EACH OEM WITH A data.tree https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html
 install.packages("tidyr")
+install.packages("readr")
 library(tidyr)
 library(dplyr)
 library(stringr)
 library(purrr)
+library(readr)
 
 file_path <- 'Fahrzeug/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv'
 # Read the CSV fil
@@ -36,11 +38,66 @@ summarize_and_print(data, columns_to_summarize)
 
 
 
+############################ Cleaner_einzelteile working version below
 
-
-file_path <- 'Einzelteile/Einzelteil_T30.csv'
+file_path <- 'Einzelteile/Einzelteil_T32.csv'
 # Read the CSV fil
-data <- read.csv(file_path, header=TRUE)
+data <- read.csv(file_path, sep=";", header=TRUE)
+
+
+cleaner_einzelteile <- function(data) {
+  data$X <- NULL
+  data$X1 <- NULL
+  
+  
+  if (ncol(data) == 7) {
+    column_vector <- colnames(data)
+    column_vector <- na.omit(column_vector)
+    return(data)
+  }
+  else if (ncol(data) == 14) {
+    original_columns <- colnames(data)[1:7]
+    # Remove the ".x" suffix from each column name
+    original_columns <- sub("\\.x$", "", original_columns)
+    concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+    colnames(concatenated_data) <- original_columns
+    for (col in original_columns) {
+      concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+    }
+    return(concatenated_data)
+  }
+  else if (ncol(data) == 21){
+    original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+    concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+    colnames(concatenated_data) <- original_columns
+    for (col in original_columns) {
+      concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+    }
+    return(concatenated_data)
+  }
+}
+
+cleandata <- cleaner_einzelteile(data)
+
+cleandata <- cleandata[!is.na(cleandata$ID_T32), ]
+
+#Delete columns only containing NAs
+#cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
+
+
+
+
+
+
+
+file_path <- 'Einzelteile/Einzelteil_T31.txt'
+# Read the txt fil
+data <- read_delim(file_path, delim = " ")
+
+
+file_path <- 'Einzelteile/Einzelteil_T39.txt'
+# Read the txt fil
+data <- read_delim(file_path)
 
 
 cleaner_einzelteile <- function(data) {
@@ -54,9 +111,10 @@ cleaner_einzelteile <- function(data) {
     return(data)
   }
   else if (ncol(data) == 14) {
-    ID_T30 <- c(data$T30, data$ID_T30.x)
-    column_vector <- colnames(data)
-    column_vector <- na.omit(column_vector)
+    for (col in original_columns) {
+      concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+    }
+    return(concatenated_data)
   }
   else if (ncol(data) == 21){
     for (col in original_columns) {
@@ -68,7 +126,8 @@ cleaner_einzelteile <- function(data) {
 
 cleandata <- cleaner_einzelteile(data)
 
-cleandata <- cleandata[!is.na(cleandata$ID_T30), ]
+cleandata <- cleandata[!is.na(cleandata$ID_T32), ]
 
 #Delete columns only containing NAs
 cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
+

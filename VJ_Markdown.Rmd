@@ -11,6 +11,7 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(purrr)
+library(readr)
 ```
 
 
@@ -53,7 +54,7 @@ columns_to_summarize <- c("ID_Karosserie", "ID_Schaltung", "ID_Sitze", "ID_Motor
 summarize_and_print(data, columns_to_summarize)
 ```
 
-Import data (should be Fabian is working on it)
+Import data (T30)
 ```{r}
 file_path <- 'Einzelteile/Einzelteil_T30.csv'
 # Read the CSV fil
@@ -97,3 +98,46 @@ cleandata <- cleandata[!is.na(cleandata$ID_T30), ]
 cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
 ```
 
+Import data (T31)
+```{r}
+file_path <- 'Einzelteile/Einzelteil_T31.txt'
+# Read the CSV file
+data <- read.delim(file_path, header=TRUE)
+
+```
+
+
+Function to delete .x and .y columns and add them below the original column
+```{r}
+cleaner_einzelteile <- function(data) {
+  data$X <- NULL
+  data$X1 <- NULL
+  original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+  concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+  if (ncol(data) == 7) {
+    column_vector <- colnames(data)
+    column_vector <- na.omit(column_vector)
+    return(data)
+  }
+  else if (ncol(data) == 14) {
+    ID_T30 <- c(data$T30, data$ID_T30.x)
+    column_vector <- colnames(data)
+    column_vector <- na.omit(column_vector)
+  }
+  else if (ncol(data) == 21){
+    for (col in original_columns) {
+      concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+    }
+    return(concatenated_data)
+  }
+}
+cleandata <- cleaner_einzelteile(data)
+```
+
+Remove NA's (this should be generalized and added to main function).
+```{r}
+cleandata <- cleandata[!is.na(cleandata$ID_T30), ]
+
+#Delete columns only containing NAs
+cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
+```
