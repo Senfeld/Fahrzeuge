@@ -38,7 +38,7 @@ summarize_and_print(data, columns_to_summarize)
 
 
 
-############################ Cleaner_einzelteile working version below
+############################ Cleaner_einzelteile working version below for .csv!
 
 file_path <- 'Einzelteile/Einzelteil_T32.csv'
 # Read the CSV fil
@@ -48,7 +48,6 @@ data <- read.csv(file_path, sep=";", header=TRUE)
 cleaner_einzelteile <- function(data) {
   data$X <- NULL
   data$X1 <- NULL
-  
   
   if (ncol(data) == 7) {
     column_vector <- colnames(data)
@@ -86,20 +85,96 @@ cleandata <- cleandata[!is.na(cleandata$ID_T32), ]
 
 
 
+######################## Code for solving .txt's!           ##########################
+Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+separator <- "  "  # adjust this according to your file's format
+line_break <- " "
+setwd("C:/Users/vbjan/Documents/Fahrzeuge/Einzelteile")
+
+file_path <- 'Einzelteil_T36.txt'
+data <- read_file(paste0(file_path))
+data <- str_replace_all(data, pattern = separator, replacement = ";")
+data <- str_replace_all(data, pattern = line_break, replacement = "\n")
+#write.csv(data, file='T_36.csv')
+cat(data, file = "T36.csv")
+
+file_path <- 'T36.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=";", header=TRUE)
+
+
+#### T31
+Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+separator <- "  "  # adjust this according to your file's format
+line_break <- ""
+setwd("C:/Users/vbjan/Documents/Fahrzeuge/Einzelteile")
+file_path <- 'Einzelteil_T31.txt'
+data <- read_file(paste0(file_path))
+data <- str_replace_all(data, pattern = separator, replacement = ";")
+data <- str_replace_all(data, pattern = line_break, replacement = "\n")
+#write.csv(data, file='T_36.csv')
+cat(data, file = "T31.csv")
+
+file_path <- 'T31.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=";", header=TRUE)
+
+#### T34
+Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+separator <- " | | "  # adjust this according to your file's format
+line_break <- ""
+setwd("C:/Users/vbjan/Documents/Fahrzeuge/Einzelteile")
+file_path <- 'Einzelteil_T34.txt'
+data <- read_file(paste0(file_path))
+data <- str_replace_all(data, pattern = fixed(separator), replacement = ";")
+data <- str_replace_all(data, pattern = fixed(line_break), replacement = "\n")
+#write.csv(data, file='T_36.csv')
+cat(data, file = "T34.csv")
+
+file_path <- 'T34.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=";", header=TRUE)
+
+
+#### T35
+separator <- "\\"  # adjust this according to your file's format
+line_break <- "" ############################ So machen das die Zahlen die Anführungsstrichen sind die Zeilenumbrüche sind "123".
+setwd("C:/Users/vbjan/Documents/Fahrzeuge/Einzelteile")
+file_path <- 'Einzelteil_T35.txt'
+data <- read_file(paste0(file_path))
+data <- str_replace_all(data, pattern = fixed(separator), replacement = ";")
+data <- str_replace_all(data, pattern = paste0("(?<=;", separator, ");(?=;)", sep = ""), replacement = "\n")
+#write.csv(data, file='T_36.csv')
+cat(data, file = "T35.csv")
+
+file_path <- 'T35.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=";", header=TRUE)
+
+
+#### T39 WORKS
+Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+separator <- "\\"  # adjust this according to your file's format
+line_break <- "  "
+setwd("C:/Users/vbjan/Documents/Fahrzeuge/Einzelteile")
+file_path <- 'Einzelteil_T39.txt'
+data <- read_file(paste0(file_path))
+data <- str_replace_all(data, pattern = fixed(separator), replacement = ";")
+data <- str_replace_all(data, pattern = line_break, replacement = "\n")
+#write.csv(data, file='T_36.csv')
+cat(data, file = "T39.csv")
+
+file_path <- 'T35.csv'
+# Read the CSV fil
+data <- read.csv(file_path, sep=";", header=TRUE)
 
 
 
 
-file_path <- 'Einzelteile/Einzelteil_T31.txt'
-# Read the txt fil
-data <- read_delim(file_path, delim = " ")
 
 
-file_path <- 'Einzelteile/Einzelteil_T39.txt'
-# Read the txt fil
-data <- read_delim(file_path)
 
-
+################## Version currently not working
 cleaner_einzelteile <- function(data) {
   data$X <- NULL
   data$X1 <- NULL
