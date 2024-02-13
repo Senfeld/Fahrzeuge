@@ -11,55 +11,75 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Funktion, um verschiedene Seperatoren richtig zu identifizieren 
 Dieser Abschnitt muss noch richtig eingebaut werden in den Code unten, er ist noch nicht implementiert - nur zur Erinnerung 
-```{r eval=FALSE, include=FALSE}
-detect_separator <- function(file_path) {
-  lines <- readLines(file_path, n = 10)  # Liest die ersten 10 Zeilen der Datei
-  possible_separators <- c(",", ";", "\t", "|")  # Definiert eine Liste möglicher Separatoren
-  counts <- sapply(possible_separators, function(sep) sum(sapply(lines, function(line) length(strsplit(line, sep)[[1]]))))
-  names(counts)[which.max(counts)]  # Gibt den Separator zurück, der am häufigsten vorkommt
-}
-```
 
 
 ```{r}
 #Hier eigenen Pfad für Dateien eingeben 
 folder_path <- "./Einzelteil"
 
-#Vektor, wo die für uns relevenaten Einzelteile aufgelistet sind 
-our_parts <- c("Einzelteil_T30.csv","Einzelteil_T31.csv","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T34.csv","Einzelteil_T35.csv","Einzelteil_T36.csv","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T39.csv","Einzelteil_T40.csv")
+#Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
+our_txt <- c("Einzelteil_T31.txt","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
+
+our_csv <- c("Einzelteil_T30.csv","Einzelteil_T31.txt","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T39.txt","Einzelteil_T40.csv")
+
+#Dateien mit Semikolon als Seperator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
+
 
 #Erzeugung leere Liste für die Einzelteile
 list_of_parts <- list()
 
-#Erstellung Vektor mit Dokumentennamen 
-file_list <- list.files(folder_path,pattern="*.csv")
 
-for(file in file_list){
-  if(file %in% our_parts){
+```
+
+
+
+```{r}
+
+#Erstellung Vektor mit Dokumentennamen 
+file_list_txt <- list.files(folder_path,pattern = "*.txt")
+
+#Textfiles einlesen und in .csv exportieren 
+for(file in file_list_txt){
+  if(file %in% our_txt){
+    
+    #Valentin Abschnitt zum einlesen der .txt 
+    
+  }
+
+
+```
+
+
+
+```{r}
+
+#Erstellung Vektor mit Dokumentennamen 
+file_list_csv <- list.files(folder_path,pattern="*.csv")
+
+for(file in file_list_csv){
+  if(file %in% our_csv){
     
       full_path <- paste0(folder_path, "/", file)
   
-  if(file.exists(full_path)){
-    if(file %in% semiko_sep){
-      list_of_parts[[file]] <- read.csv2(full_path, sep=";", header=T,dec=",")
-      
-    }else{
-     
-      list_of_parts[[file]] <- read.csv2(full_path, sep=",", dec = "." ,header=T)  
+    if(file.exists(full_path)){
+      if(file %in% semiko_sep){
+        
+        list_of_parts[[file]] <- read.csv2(full_path, sep=";", header=T,dec=",")
+        
+      }else{
+       list_of_parts[[file]] <- read.csv2(full_path, sep=",", dec = "." ,header=T)  
+        }
       
     }
     
-    
-  }
-    
+  }else{
       
-    }else{
-      
-      print(paste(file,"gehört nicht zu den untersuchten Daten"))
-      
+      print(paste(file,"gehört nicht zu den untersuchten .csv Daten"))
       next
     }
+  
+}
   
 }
 
