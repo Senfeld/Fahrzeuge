@@ -152,6 +152,7 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
  T35_clean <- T35_clean %>%
   select(where(~ all(!is.na(.))))
  
+ #Umbennenung der Spalten 
  T35_clean <- T35_clean %>% 
    rename(ID_T35 = ID_T35.x,
           Produktionsdatum = Produktionsdatum.x,
@@ -160,6 +161,10 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
           Fehlerhaft = Fehlerhaft.x,
           Fehlerhaft_Datum = Fehlerhaft_Datum.x,
           Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x)
+ 
+ #Spalte in numeric-Klasse umwandeln 
+ T35_clean$Fehlerhaft_Fahrleistung <- as.numeric(T35_clean$Fehlerhaft_Fahrleistung)
+ 
 ```
 
 
