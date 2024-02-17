@@ -8,10 +8,14 @@ date: "2024-02-06"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+```
 
-# Funktion, um verschiedene Seperatoren richtig zu identifizieren 
-Dieser Abschnitt muss noch richtig eingebaut werden in den Code unten, er ist noch nicht implementiert - nur zur Erinnerung 
 
+#Vorbereitung
+Hier werden einige Vorbereitungen getroffen, um das einlesen zu vereinfachen. In *our_csv* ist schon festgelegt, welche CSV-Dateien für uns relevant sind, damit die Schleife direkt nach diesen suchen kann. Das gleiche für *our_txt*.
+Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert. 
 
 ```{r}
 #Hier eigenen Pfad für Dateien eingeben 
@@ -20,7 +24,7 @@ folder_path <- "./Einzelteil"
 #Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
 our_txt <- c("Einzelteil_T31.txt","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
 
-our_csv <- c("Einzelteil_T30.csv","Einzelteil_T31.txt","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T39.txt","Einzelteil_T40.csv")
+our_csv <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T40.csv")
 
 #Dateien mit Semikolon als Seperator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
@@ -34,6 +38,7 @@ list_of_parts <- list()
 
 
 
+#Valentins Code, um die .txt einzuelesen (Alle außer T34 und T35, diese werden weiter unten behandelt)
 ```{r}
 
 #Erstellung Vektor mit Dokumentennamen 
@@ -46,12 +51,14 @@ for(file in file_list_txt){
     #Valentin Abschnitt zum einlesen der .txt 
     
   }
+}  
 
 
 ```
 
 
-
+#Einlesen der CSV-Dateien und speichern in der Liste "list_of_parts"
+Code spuckt Meldung aus, wenn bestimmte CSV nicht zur untersuchenden Gruppe gehört und unterscheidet zwischen Seperator ";" und ",". 
 ```{r}
 
 #Erstellung Vektor mit Dokumentennamen 
@@ -81,26 +88,152 @@ for(file in file_list_csv){
   
 }
   
-}
+
 
 ```
 
-
-
-
-#Versuch Einzelteil T30 zu reparieren 
+#Platzhalter für späteren Code - wichtig 
 ```{r eval=FALSE, include=FALSE}
-#Spaltennamen herausfinden 
-names(T30)
-
-#Doppelte Spalten zu einer zusammenführen 
-ID_col <- c(T30$ID_T30.x,T30$ID_T30.y,T30$ID_T30)
-
-#NA entfernen aus Spalte - später mit names(gesamt)
-ID_col <- na.omit(ID_col)
-
-
-
+#Hier soll Code am Ende stehen, welcher alle Dateien säubert, die in list_of_parts enthalten sind. 
 
 ```
+
+
+
+
+#Versuch .txt ohne offensichtlichen linebreak zu importieren (Einlesene von T34 und T35)
+#Einlesen und Säuberung von T35
+```{r T35}
+library(tidyverse)
+
+text <- readLines("Einzelteil/Einzelteil_T35.txt", warn = FALSE)
+gesamter_text <- paste(text, collapse = " ")
+
+
+# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für "ganzeZahl"\ganzeZahl\
+# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
+# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+gesamter_text <- gsub("(?<!^)(\\\"\\d+-\\d+-\\d+-\\d+\"\\\\)", "\n\\1", gesamter_text, perl = TRUE)
+
+
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\"\\\\", "", x)
+ })
+
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+#Macht es möglich .txt als .csv einzulesen 
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ 
+ #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
+ T35 <- read_csv(txt_to_csv, col_names = TRUE)
+```
+ 
+#Säuberung der Datei T35
+```{r}
+  #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+  T35_clean <- T35[!is.na(T35$Fehlerhaft_Datum.x),]
+
+ #entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
+ T35_clean$Fehlerhaft_Fahrleistung.x <- str_replace_all(T35_clean$Fehlerhaft_Fahrleistung.x, '\"[0-9]+\"', '')
+ 
+ #Entfernt alle Spalten, die NA enthalten 
+ T35_clean <- T35_clean %>%
+  select(where(~ all(!is.na(.))))
+ 
+ T35_clean <- T35_clean %>% 
+   rename(ID_T35 = ID_T35.x,
+          Produktionsdatum = Produktionsdatum.x,
+          Herstellernummer = Herstellernummer.x,
+          Werksnummer = Werksnummer.x,
+          Fehlerhaft = Fehlerhaft.x,
+          Fehlerhaft_Datum = Fehlerhaft_Datum.x,
+          Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x)
+```
+
+
+
+
+
+#Einlesen und Säuberung von T34
+```{r T34}
+
+text <- readLines("Einzelteil/Einzelteil_T34.txt", warn = FALSE)
+gesamter_text <- paste(text, collapse = " ")
+
+
+# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für "ganzeZahl"\ganzeZahl\
+# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
+# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+gesamter_text <- gsub("(?<!^)(\"\\d+-\\d+-\\d+-\\d+\" \\| \\| )", "\n\\1", gesamter_text, perl = TRUE)
+
+
+
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\" \\| \\| ", "", x)
+})
+
+
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+#Macht es möglich .txt als .csv einzulesen 
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ 
+ #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
+ T34 <- read_csv(txt_to_csv, col_names = TRUE)
+```
+ 
+#Säuberung der Datei T34
+```{r}
+  #Spaltennamen umbennen, hier wird Spalte 9, die 1 heißt umbenannt zu "Unsinn", da man diese sonst nicht einfach löschen    könnte 
+  #Verschieben der Spalte "Produktionsdatum" auf zweite Position
+  T34_clean <- T34 %>% 
+     rename(Produktionsdatum = Produktionsdatum_Origin_01011970,
+            Unsinn = 9) %>%
+      select(ID_T34, Produktionsdatum, everything())
+
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T34_clean$Produktionsdatum <- as.Date(T34_clean$Produktionsdatum, origin = "1970-01-01")
+  
+  #Restliche Spalten löschen
+  T34_clean$...10 <- NULL
+  T34_clean$Unsinn <- NULL 
+  T34_clean$`origin"1`<- NULL 
+  
+  #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+  T34_clean <- T34_clean[!is.na(T34$Fehlerhaft_Datum),]
+  
+  
+  
+```
+
+
+
+#Für Später
+```{r eval=FALSE, include=FALSE}
+#Code um nachher T34_clean als auch T35_clean der Liste hinzuzfügen, wo alle bereits gesäuberten Dateien liegen. 
+```
+
 
