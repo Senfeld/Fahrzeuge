@@ -28,7 +28,7 @@ folder_path <- "./Einzelteil"
 #Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
 our_txt <- c("Einzelteil_T31.txt","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
 
-our_csv <- c("Einzelteil_T30.csv","Einzelteil_T31.csv","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T36.csv","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T39.csv","Einzelteil_T40.csv")
+our_csv <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T40.csv")
 
 #Dateien mit Semikolon als Seperator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
@@ -43,6 +43,8 @@ list_of_parts <- list()
 
 
 #Valentins Code, um die .txt einzuelesen (Alle außer T34 und T35, diese werden weiter unten behandelt)
+
+
 ```{r}
 
 #Erstellung Vektor mit Dokumentennamen 
@@ -73,9 +75,149 @@ for(file in file_list_txt){
   }
 }  
 
+```
+#Valentins Code zur Säuberung der konvertiertern .txt Dateien
+
+```{r}
+setwd("./Einzelteil")
+
+cleaner_einzelteile <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    
+    if (ncol(data) == 7) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else if (ncol(data) == 21){
+      original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+      concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+}
+
+data <- read.csv("Einzelteil_T31.csv", sep=";", header=TRUE)
+cleandata <- cleaner_einzelteile(data)
+  T31 <- cleandata[!is.na(cleandata$ID_T31), ]
+  T31 <- T31 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T31$Produktionsdatum <- as.Date(T31$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  T31$origin <- NULL 
+T36 <- read.csv("Einzelteil_T36.csv", sep=";", header=TRUE)
+T36 <- T36 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T36$Produktionsdatum <- as.Date(T36$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  T36$origin <- NULL
+  T36$X1 <- NULL
+#T39 <- read.csv("Einzelteil_T39.csv", sep=";", header=TRUE)
 
 ```
 
+
+
+#Valentins Code zur Säuberung aller .csv Dateien die NICHT als .txt gegeben wurden.
+```{r}
+setwd("./Einzelteil")
+
+cleaner_einzelteile <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    
+    if (ncol(data) == 7) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else if (ncol(data) == 21){
+      original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+      concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+}
+
+  data <- read.csv("Einzelteil_T30.csv", sep=",",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T30 <- cleandata[!is.na(cleandata$ID_T30), ]
+  data <- read.csv("Einzelteil_T32.csv", sep=";",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T32 <- cleandata[!is.na(cleandata$ID_T32), ]
+  data <- read.csv("Einzelteil_T33.csv", sep=",",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T33 <- cleandata[!is.na(cleandata$ID_T33), ]
+  T33 <- T33 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T33$Produktionsdatum <- as.Date(T33$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  T33$origin <- NULL 
+  data <- read.csv("Einzelteil_T37.csv", sep=",",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T37 <- cleandata[!is.na(cleandata$ID_T37), ]
+  T37 <- T37 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+    #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T37$Produktionsdatum <- as.Date(T37$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  T37$origin <- NULL 
+  data <- read.csv("Einzelteil_T38.csv", sep=";",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T38 <- cleandata[!is.na(cleandata$ID_T38), ]
+  data <- read.csv("Einzelteil_T40.csv", sep=";",header=TRUE)
+  cleandata <- cleaner_einzelteile(data)
+  T40 <- cleandata[!is.na(cleandata$ID_T40), ]
+  T40 <- T40 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+    #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T40$Produktionsdatum <- as.Date(T40$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  T40$origin <- NULL 
+
+```
 
 #Einlesen der CSV-Dateien und speichern in der Liste "list_of_parts"
 Code spuckt Meldung aus, wenn bestimmte CSV nicht zur untersuchenden Gruppe gehört und unterscheidet zwischen Seperator ";" und ",". 
@@ -160,7 +302,7 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
  T35 <- read_csv(txt_to_csv, col_names = TRUE)
 ```
  
-#Säuberung der Datei T35
+Säuberung der Datei T35
 ```{r}
   #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
   T35_clean <- T35[!is.na(T35$Fehlerhaft_Datum.x),]
