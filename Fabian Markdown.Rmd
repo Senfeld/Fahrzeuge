@@ -19,8 +19,11 @@ Hier werden einige Vorbereitungen getroffen, um das einlesen zu vereinfachen. In
 Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert. 
 
 ```{r}
+#RAM Speicherplatz auf 3GB einstellen
+Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+
 #Hier eigenen Pfad für Dateien eingeben 
-folder_path <- "./Einzelteil"
+folder_path <- "./Einzelteile"
 
 #Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
 our_txt <- c("Einzelteil_T31.txt","Einzelteil_T34.txt","Einzelteil_T35.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
@@ -44,13 +47,29 @@ list_of_parts <- list()
 
 #Erstellung Vektor mit Dokumentennamen 
 file_list_txt <- list.files(folder_path,pattern = "*.txt")
+setwd("./Einzelteile") 
 
 #Textfiles einlesen und in .csv exportieren 
 for(file in file_list_txt){
-  if(file %in% our_txt){
-    
-    #Valentin Abschnitt zum einlesen der .txt 
-    
+  if(file %in% our_txt){ #Diese Zeile kann man später löschen, weil die folgenden if's diese Zeile redundant machen
+    if(file == "Einzelteil_T31.txt"){
+      data <- read_file(paste0(file))
+      data <- str_replace_all(data, pattern = "  ", replacement = ";")
+      data <- str_replace_all(data, pattern = "", replacement = "\n")
+      cat(data, file = "Einzelteil_T31.csv")
+    }
+    else if(file == "Einzelteil_T36.txt"){
+      data <- read_file(paste0(file))
+      data <- str_replace_all(data, pattern = "  ", replacement = ";")
+      data <- str_replace_all(data, pattern = " ", replacement = "\n")
+      cat(data, file = "Einzelteil_T36.csv")
+    }
+    else if(file == "Einzelteil_T39.txt"){
+      data <- read_file(paste0(file))
+      data <- str_replace_all(data, pattern = fixed("\\"), replacement = ";")
+      data <- str_replace_all(data, pattern = "  ", replacement = "\n")
+      cat(data, file = "Einzelteil_T39.csv")
+    }
   }
 }  
 
