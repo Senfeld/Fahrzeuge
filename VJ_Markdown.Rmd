@@ -141,3 +141,103 @@ cleandata <- cleandata[!is.na(cleandata$ID_T30), ]
 #Delete columns only containing NAs
 cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
 ```
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+Einlesung der Komponenten
+```{r}
+komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_components <- list()
+
+folder_path <- "./Komponente/Komponente"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% komponenten_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file == "Komponente_K7.txt"){
+        
+        #read_csv2 zum einlesen mit Semikolon-Trennzeichen 
+        list_of_components[[file]] <- read_delim(full_path)
+        
+      }else if(file=="Komponente_K4.csv" | file=="Komponente_K6.csv"){
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv2(full_path) 
+      }
+      else {
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv(full_path) 
+      }
+    }
+  }
+}
+
+  
+```
+
+
+Säuberung der eingelesenen Komponenten
+
+
+```{r}
+cleaner_komponente <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+}
+
+  
+cleandata <- cleaner_komponente(list_of_components$Komponente_K4.csv)
+K4 <- cleandata[!is.na(cleandata$ID_Karosserie), ]
+
+cleandata <- cleaner_komponente(list_of_components$Komponente_K5.csv)
+K5 <- cleandata[!is.na(cleandata$ID_Karosserie), ]
+
+cleandata <- cleaner_komponente(list_of_components$Komponente_K6.csv)
+K6 <- cleandata[!is.na(cleandata$ID_Karosserie), ]
+K6 <- K6 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  K6$Produktionsdatum <- as.Date(K6$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  K6$origin <- NULL 
+  
+cleandata <- cleaner_komponente(list_of_components$Komponente_K7.txt)
+K7 <- cleandata[!is.na(cleandata$ID_Karosserie), ]
+K7 <- K7 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  K7$Produktionsdatum <- as.Date(K7$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  K7$origin <- NULL 
+
+```
