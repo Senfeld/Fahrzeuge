@@ -22,7 +22,7 @@ Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert.
 
 ```{r}
 #RAM Speicherplatz auf 3GB einstellen
-#Sys.setenv("VROOM_CONNECTION_SIZE" = "3GB")
+
 
 #Hier eigenen Pfad für Dateien eingeben 
 folder_path <- "./Einzelteil"
@@ -93,7 +93,7 @@ for(file in file_list_csv){
 ```
 
 ##Einlesen der TXT-Dateien
-```{r}
+```{r warning=FALSE}
 
 #Erstellung Vektor mit Dokumentennamen 
 file_list_txt <- list.files(folder_path,pattern="*.txt")
@@ -147,10 +147,17 @@ for(file in file_list_txt){
       next
     }
   
-  }
+}
+
+#Sortieren der Liste nach Namen 
+list_of_parts <- list_of_parts[order(names(list_of_parts))]
   
 
 ```
+
+
+
+
 #Funktionen zum einlesen von T34 und T35
 Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keinen eindeutigen Zeilenumbruch hatten. Hier musste also ein Muster identifiziert werden, vor welches jeweils ein Zeilenumbruch eingefügt werden sollte. 
 
@@ -238,3 +245,202 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
   
 }
 ```
+
+#Aufbereitung der Dateien 
+Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
+
+```{r}
+
+list_of_parts_clean <- list()
+
+#Gruppierung nach benötigter Säuberung 
+
+clean_T34_T35 <- c("Einzelteil_T34.txt", "Einzelteil_T35.txt")
+
+#Gruppe1 sind die Dateien mit 10 == Spalten 
+Gruppe1 <- c("Einzelteil_T31.txt","Einzelteil_T33.csv","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T40.csv")
+
+#Gruppe1 sind die Dateien mit 16 <= Spalten
+Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Einzelteil_T39.txt")
+
+for (Einzelteil in names(list_of_parts)) {
+  
+  
+  list_of_parts_clean[[Einzelteil]] <- cleaner_einzelteile(Einzelteil)
+  
+}
+
+```
+
+
+```{r}
+
+cleaner_einzelteile <- function(Einzelteil){
+  
+  #Speichern des Inhalts 
+  data <- list_of_parts[[Einzelteil]]
+  
+  
+  
+  if(Einzelteil %in% clean_T34_T35){
+    
+    clean_data <- cleaning_T34_T35(Einzelteil, data)
+    
+    
+    return(clean_data)
+    
+  }
+  else{
+
+    #Löschen der ersten beiden Spalten
+    data <- data[,-c(1,2)]
+    
+    #Reparieren der Spaltennamen 
+    clean_data <- cleaning_other(data)
+    
+    if(Einzelteil %in% Gruppe1){
+    
+     #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
+     clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+     
+     
+     clean_data <- clean_data %>%
+       rename(Produktionsdatum = Produktionsdatum_Origin_01011970) %>%
+        select(names(clean_data[,1]), Produktionsdatum, everything())
+     
+     clean_data$Produktionsdatum <- as.Date(clean_data$Produktionsdatum, origin="1970-01-01")
+     clean_data$origin <- NULL 
+      
+      return(clean_data)
+      
+    }else if(Einzelteil %in% Gruppe2){
+      
+      #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben
+      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      
+      return(clean_data)
+      
+    }
+  }
+
+
+}
+
+
+
+
+```
+
+##Säuberung aller Einzelteile bis auf T34 und T35
+```{r}
+
+cleaning_other <- function(data){
+  
+  if (ncol(data) == 7) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else if (ncol(data) == 21){
+      original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+      concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+  
+}
+
+```
+
+
+###Säuberung von T34 und T35
+```{r}
+cleaning_T34_T35 <- function(Einzelteil,data){
+  
+  if(Einzelteil == "Einzelteil_T34.txt"){
+    
+    T34 <- data 
+    
+    #Spaltennamen umbennen, hier wird Spalte 9, die 1 heißt umbenannt zu "Unsinn", da man diese sonst nicht einfach löschen    könnte 
+  #Verschieben der Spalte "Produktionsdatum" auf zweite Position
+  T34_clean <- T34 %>% 
+     rename(Produktionsdatum = Produktionsdatum_Origin_01011970,
+            Unsinn = 9) %>%
+      select(ID_T34, Produktionsdatum, everything())
+
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T34_clean$Produktionsdatum <- as.Date(T34_clean$Produktionsdatum, origin = "1970-01-01")
+  
+  #Restliche Spalten löschen
+  T34_clean$...10 <- NULL
+  T34_clean$Unsinn <- NULL 
+  T34_clean$`origin"1`<- NULL 
+  
+  #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+  T34_clean <- T34_clean[!is.na(T34$Fehlerhaft_Datum),]
+    
+  return(T34_clean)
+    
+  }else if(Einzelteil == "Einzelteil_T35.txt"){
+    
+    T35 <- data
+    
+      #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+    T35_clean <- T35[!is.na(T35$Fehlerhaft_Datum.x),]
+  
+    #entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
+    T35_clean$Fehlerhaft_Fahrleistung.x <- str_replace_all(T35_clean$Fehlerhaft_Fahrleistung.x, '\"[0-9]+\"', '')
+   
+    #Entfernt alle Spalten, die NA enthalten 
+    T35_clean <- T35_clean %>%
+      select(where(~ all(!is.na(.))))
+   
+    #Umbennenung der Spalten 
+    T35_clean <- T35_clean %>% 
+       rename(ID_T35 = ID_T35.x,
+              Produktionsdatum = Produktionsdatum.x,
+              Herstellernummer = Herstellernummer.x,
+              Werksnummer = Werksnummer.x,
+              Fehlerhaft = Fehlerhaft.x,
+              Fehlerhaft_Datum = Fehlerhaft_Datum.x,
+              Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x)
+     
+    #Spalte in numeric-Klasse umwandeln 
+    T35_clean$Fehlerhaft_Fahrleistung <- as.numeric(T35_clean$Fehlerhaft_Fahrleistung)
+    
+    return(T35_clean)
+    
+  }else{
+    
+    print("Datei gehört nicht zu T34 oder T35 und muss somit anders gesäubert werden!")  
+    
+    }
+    
+}
+  
+
+
+
+
+```
+
+
