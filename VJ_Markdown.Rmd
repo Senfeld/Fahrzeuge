@@ -149,6 +149,7 @@ cleandata <- cleandata[, colSums(is.na(cleandata)) != nrow(cleandata)]
 Einlesung der Komponenten
 ```{r}
 komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
+col_names <- c("","X1","ID_Karosserie",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
 
 #Erzeugung leere Liste für die Komponenten
 list_of_components <- list()
@@ -167,8 +168,9 @@ for(file in file_list){
     if(file.exists(full_path)){
       if(file == "Komponente_K7.txt"){
         
-        #read_csv2 zum einlesen mit Semikolon-Trennzeichen 
-        list_of_components[[file]] <- read_delim(full_path)
+        data <- readLines(full_path)
+        
+        list_of_components[[file]] <- read.table(text = data, sep = "\t", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names)
         
       }else if(file=="Komponente_K4.csv" | file=="Komponente_K6.csv"){
         
