@@ -243,3 +243,95 @@ K7 <- K7 %>%
   K7$origin <- NULL 
 
 ```
+
+Fahrzeuge einlesen
+```{r}
+car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_cars <- list()
+
+folder_path <- "./Fahrzeug/Fahrzeug"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% car_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file=="Fahrzeuge_OEM1_Typ11.csv" | file=="Fahrzeuge_OEM2_Typ21.csv"){
+        list_of_cars[[file]] <- read_csv(full_path)
+      }
+      else if(file=="Fahrzeuge_OEM1_Typ12.csv" | file=="Fahrzeuge_OEM2_Typ22.csv"){
+        list_of_cars[[file]] <- read_csv2(full_path)
+      }
+         
+    }
+  }
+}
+
+  
+```
+
+Säuberung der eingelesenen Fahrzeuge(Bestandteile fehlen noch!)
+
+
+```{r}
+cleaner_cars <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+  
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM1_Typ11.csv)
+OEM1_11 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM2_Typ21.csv)
+OEM2_21 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+OEM2_21 <- OEM2_21 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  OEM2_21$Produktionsdatum <- as.Date(OEM2_21$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  OEM2_21$origin <- NULL 
+
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM2_Typ22.csv)
+OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+OEM2_22 <- OEM2_22 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  OEM2_22$Produktionsdatum <- as.Date(OEM2_22$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  OEM2_22$origin <- NULL 
+
+  
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM1_Typ12.csv)
+OEM1_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+
+```
