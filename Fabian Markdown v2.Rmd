@@ -25,7 +25,7 @@ Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert.
 
 
 #Hier eigenen Pfad für Dateien eingeben 
-folder_path <- "./Einzelteil"
+folder_path <- "./Data/Einzelteil"
 
 #Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
 our_txt <- c("Einzelteil_T31.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
@@ -48,6 +48,94 @@ semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
 list_of_parts <- list()
 
 
+```
+
+#Funktionen zum einlesen von T34 und T35
+Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keinen eindeutigen Zeilenumbruch hatten. Hier musste also ein Muster identifiziert werden, vor welches jeweils ein Zeilenumbruch eingefügt werden sollte. 
+
+###T34 Funktion
+```{r}
+reading_T34 <- function(data){
+  
+  gesamter_text <- paste(data, collapse = " ")
+
+
+# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
+# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
+# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+gesamter_text <- gsub("(?<!^)(\"\\d+-\\d+-\\d+-\\d+\" \\| \\| )", "\n\\1", gesamter_text, perl = TRUE)
+
+
+
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\" \\| \\| ", "", x)
+})
+
+
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+#Macht es möglich .txt als .csv einzulesen 
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ 
+ #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
+ T34 <- read_csv(txt_to_csv, col_names = TRUE)
+ 
+ return(T34)
+  
+}
+```
+
+
+###T35 Funktion
+```{r}
+reading_T35 <- function(data){
+  
+  gesamter_text <- paste(data, collapse = " ")
+
+
+# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
+# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
+# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+gesamter_text <- gsub("(?<!^)(\\\"\\d+-\\d+-\\d+-\\d+\"\\\\)", "\n\\1", gesamter_text, perl = TRUE)
+
+
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\"\\\\", "", x)
+ })
+
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+#Macht es möglich .txt als .csv einzulesen 
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ 
+ #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
+ T35 <- read_csv(txt_to_csv, col_names = TRUE)
+ 
+ return(T35)
+  
+}
 ```
 
 #Einlesen der untersuchten Dateien
@@ -158,121 +246,14 @@ list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 
 
-#Funktionen zum einlesen von T34 und T35
-Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keinen eindeutigen Zeilenumbruch hatten. Hier musste also ein Muster identifiziert werden, vor welches jeweils ein Zeilenumbruch eingefügt werden sollte. 
 
-###T34 Funktion
-```{r}
-reading_T34 <- function(data){
-  
-  gesamter_text <- paste(data, collapse = " ")
-
-
-# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
-# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
-# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
-# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
-gesamter_text <- gsub("(?<!^)(\"\\d+-\\d+-\\d+-\\d+\" \\| \\| )", "\n\\1", gesamter_text, perl = TRUE)
-
-
-
-
-# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
-gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
-
-#Entfernen Spalte "X1"
-gesplitteter_text <- lapply(gesplitteter_text, function(x) {
-   sub("^\\\"X1\" \\| \\| ", "", x)
-})
-
-
-
-# Ersetze | | und \ durch Komma in jedem Datensatz
-gesplitteter_text <- lapply(gesplitteter_text, function(x) {
-  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
-  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
-})
-
-#Macht es möglich .txt als .csv einzulesen 
- txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
- 
- #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
- T34 <- read_csv(txt_to_csv, col_names = TRUE)
- 
- return(T34)
-  
-}
-```
-
-
-###T35 Funktion
-```{r}
-reading_T35 <- function(data){
-  
-  gesamter_text <- paste(data, collapse = " ")
-
-
-# Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
-# Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
-# und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
-# Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
-gesamter_text <- gsub("(?<!^)(\\\"\\d+-\\d+-\\d+-\\d+\"\\\\)", "\n\\1", gesamter_text, perl = TRUE)
-
-
-
-# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
-gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
-
-#Entfernen Spalte "X1"
- gesplitteter_text <- lapply(gesplitteter_text, function(x) {
-   sub("^\\\"X1\"\\\\", "", x)
- })
-
-
-# Ersetze | | und \ durch Komma in jedem Datensatz
-gesplitteter_text <- lapply(gesplitteter_text, function(x) {
-  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
-  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
-})
-
-#Macht es möglich .txt als .csv einzulesen 
- txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
- 
- #Ab Zeile 491308 wird es eklig, aber lässt sich trotzdem mit arbeiten 
- T35 <- read_csv(txt_to_csv, col_names = TRUE)
- 
- return(T35)
-  
-}
-```
 
 #Aufbereitung der Dateien 
 Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
 
-```{r}
-
-list_of_parts_clean <- list()
-
-#Gruppierung nach benötigter Säuberung 
-
-clean_T34_T35 <- c("Einzelteil_T34.txt", "Einzelteil_T35.txt")
-
-#Gruppe1 sind die Dateien mit 10 == Spalten 
-Gruppe1 <- c("Einzelteil_T31.txt","Einzelteil_T33.csv","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T40.csv")
-
-#Gruppe1 sind die Dateien mit 16 <= Spalten
-Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Einzelteil_T39.txt")
-
-for (Einzelteil in names(list_of_parts)) {
-  
-  
-  list_of_parts_clean[[Einzelteil]] <- cleaner_einzelteile(Einzelteil)
-  
-}
-
-```
 
 
+#Funktionen für die Säuberung 
 ```{r}
 
 cleaner_einzelteile <- function(Einzelteil){
@@ -286,6 +267,10 @@ cleaner_einzelteile <- function(Einzelteil){
     
     clean_data <- cleaning_T34_T35(Einzelteil, data)
     
+     clean_data <- clean_data %>% 
+       rename(ID_Einzelteil = names(clean_data[1]))
+     
+     clean_data <- adjust_classes(clean_data)
     
     return(clean_data)
     
@@ -303,13 +288,17 @@ cleaner_einzelteile <- function(Einzelteil){
      #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
      
-     
      clean_data <- clean_data %>%
-       rename(Produktionsdatum = Produktionsdatum_Origin_01011970) %>%
-        select(names(clean_data[,1]), Produktionsdatum, everything())
+       rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_data[1]), Produktionsdatum, everything())
+     
+     clean_data <- clean_data %>% 
+       rename(ID_Einzelteil = names(clean_data[1]))
      
      clean_data$Produktionsdatum <- as.Date(clean_data$Produktionsdatum, origin="1970-01-01")
      clean_data$origin <- NULL 
+     
+     clean_data <- adjust_classes(clean_data)
       
       return(clean_data)
       
@@ -317,6 +306,11 @@ cleaner_einzelteile <- function(Einzelteil){
       
       #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben
       clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      
+       clean_data <- clean_data %>% 
+       rename(ID_Einzelteil = names(clean_data[1]))
+       
+       clean_data <- adjust_classes(clean_data)
       
       return(clean_data)
       
@@ -444,3 +438,345 @@ cleaning_T34_T35 <- function(Einzelteil,data){
 ```
 
 
+#Funktion zum anpassen der Klassen der Spalten 
+```{r}
+adjust_classes <- function(df) {
+  # Anpassung der Klassen gemäß Ihren Anforderungen
+  df <- df %>%
+    mutate(across(c(Produktionsdatum, Fehlerhaft_Datum), as.Date),
+           across(names(df[1]), as.character),
+           across(c(Herstellernummer, Werksnummer, Fehlerhaft,Fehlerhaft_Fahrleistung), as.numeric))
+  return(df)
+}
+```
+
+
+# Ausführung der Säuberung 
+```{r}
+
+list_of_parts_clean <- list()
+
+#Gruppierung nach benötigter Säuberung 
+
+clean_T34_T35 <- c("Einzelteil_T34.txt", "Einzelteil_T35.txt")
+
+#Gruppe1 sind die Dateien mit 10 == Spalten 
+Gruppe1 <- c("Einzelteil_T31.txt","Einzelteil_T33.csv","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T40.csv")
+
+#Gruppe1 sind die Dateien mit 16 <= Spalten
+Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Einzelteil_T39.txt")
+
+for (Einzelteil in names(list_of_parts)) {
+  
+  
+  list_of_parts_clean[[Einzelteil]] <- cleaner_einzelteile(Einzelteil)
+  
+}
+
+```
+
+
+
+
+
+
+#Joining der Einzelteile 
+```{r}
+
+
+Einzelteile_full <- tibble(
+  ID = character(),
+  Produktionsdatum = as.Date(NA),
+  Herstellernummer = numeric(),
+  Werksnummer = numeric(),
+  Fehlerhaft = numeric(),
+  Fehlerhaft_Datum = as.Date(NA),
+  Fehlerhaft_Fahrleistung = numeric()
+)
+
+
+for(Einzelteil in names(list_of_parts_clean)){
+  
+  Einzelteile_full <- full_join(Einzelteile_full,list_of_parts_clean[[Einzelteil]])
+  
+}
+
+
+```
+
+
+#Einlesen von Komponenten 
+
+```{r}
+komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
+bestandteilek_li <- c("Bestandteile_Komponente_K4.csv", "Bestandteile_Komponente_K5.csv", "Bestandteile_Komponente_K6.csv", "Bestandteile_Komponente_K7.csv")
+col_names <- c("","X1","ID_Karosserie",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_components <- list()
+list_of_bestandcomponents <- list()
+
+folder_path <- "./Data/Komponente"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% komponenten_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file == "Komponente_K7.txt"){
+        
+        data <- readLines(full_path)
+        
+        list_of_components[[file]] <- read.table(text = data, sep = "\t", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names)
+        
+      }else if(file=="Komponente_K4.csv" | file=="Komponente_K6.csv"){
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv2(full_path) 
+      }
+      else {
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv(full_path) 
+      }
+    }
+  }
+  else if(file %in% bestandteilek_li){
+    if(file.exists(full_path)){
+        list_of_bestandcomponents[[file]] <- read_csv2(full_path) 
+      }
+
+ }
+}
+
+  
+```
+
+
+#Säuberung der eingelesenen Komponenten
+
+
+##Komponenten reparieren - Funktion
+```{r}
+
+cleaner_komponente <- function(data) {
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else if (ncol(data) <7){
+      return(data)
+    }
+}
+```
+
+
+##Säuberung der Komponenten 
+```{r}
+cleaning_Komponenten <- function(Komponente){
+  
+  
+  data <- list_of_components[[Komponente]]
+  data <- data[,-c(1,2)]
+  clean_component <- cleaner_komponente(data)
+  
+  if(Komponente %in% Gruppe1_Komponente){
+    
+    clean_component <- adjust_classes(clean_component)
+    
+    clean_component <- clean_component[!is.na(clean_component$Fehlerhaft_Datum), ]
+    
+    return(clean_component)
+    
+  }else if(Komponente %in% Gruppe2_Komponente){
+    
+    clean_component <- clean_component %>% 
+      rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_component[1]), Produktionsdatum, everything())
+    
+    clean_component$Produktionsdatum <-  as.Date(clean_component$Produktionsdatum, origin = "1970-01-01")
+    
+    clean_component$origin <- NULL 
+    
+    clean_component <- clean_component[!is.na(clean_component$Fehlerhaft_Datum), ]
+    
+    clean_component <- adjust_classes(clean_component)
+    
+    return(clean_component)
+  }
+  
+  
+}
+
+```
+
+#Ausführung der Säuberung 
+```{r}
+Gruppe1_Komponente <- c("Komponente_K4.csv","Komponente_K5.csv")
+Gruppe2_Komponente <- c("Komponente_K6.csv","Komponente_K7.txt")
+
+list_of_components_clean <- list()
+for(Komponente in names(list_of_components)){
+  
+  list_of_components_clean[[Komponente]] <- cleaning_Komponenten(Komponente)
+  
+}
+
+
+```
+
+
+
+
+#Joining der Komponenten 
+```{r}  
+
+
+
+Komponenten_full <- tibble(
+  ID_Karosserie = character(),
+  Produktionsdatum = as.Date(NA),
+  Herstellernummer = numeric(),
+  Werksnummer = numeric(),
+  Fehlerhaft = numeric(),
+  Fehlerhaft_Datum = as.Date(NA),
+  Fehlerhaft_Fahrleistung = numeric()
+)
+
+
+for(Komponente in names(list_of_components_clean)){
+  
+  Komponenten_full <- full_join(Komponenten_full,list_of_components_clean[[Komponente]])
+  
+}
+
+```
+
+
+#Fahrzeuge einlesen
+```{r eval=FALSE, include=FALSE}
+car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
+car_be_li <- c("Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_cars <- list()
+list_of_cars_be <- list()
+
+folder_path <- "./Data/Fahrzeug"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% car_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file=="Fahrzeuge_OEM1_Typ11.csv" | file=="Fahrzeuge_OEM2_Typ21.csv"){
+        list_of_cars[[file]] <- read_csv(full_path)
+      }
+      else if(file=="Fahrzeuge_OEM1_Typ12.csv" | file=="Fahrzeuge_OEM2_Typ22.csv"){
+        list_of_cars[[file]] <- read_csv2(full_path)
+      }
+         
+    }
+  }
+  else if(file %in% car_be_li){
+    if(file.exists(full_path)){
+      list_of_cars_be[[file]] <- read_csv2(full_path) 
+    }
+  }
+}
+
+  
+```
+
+
+##Säuberung der eingelesenen Fahrzeuge(Bestandteile fehlen noch!)
+```{r eval=FALSE, include=FALSE}
+cleaner_cars <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+  
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM1_Typ11.csv)
+OEM1_11 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM2_Typ21.csv)
+OEM2_21 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+OEM2_21 <- OEM2_21 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  OEM2_21$Produktionsdatum <- as.Date(OEM2_21$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  OEM2_21$origin <- NULL 
+
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM2_Typ22.csv)
+OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+OEM2_22 <- OEM2_22 %>%
+    rename(Produktionsdatum = Produktionsdatum_Origin_01011970)
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  OEM2_22$Produktionsdatum <- as.Date(OEM2_22$Produktionsdatum, origin = "1970-01-01")
+  #Origin Spalte löschen
+  OEM2_22$origin <- NULL 
+
+  
+cleandata <- cleaner_cars(list_of_cars$Fahrzeuge_OEM1_Typ12.csv)
+OEM1_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ11.csv)
+B_OEM1_11 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ12.csv)
+B_OEM1_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ21.csv)
+B_OEM2_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ22.csv)
+B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+
+```
