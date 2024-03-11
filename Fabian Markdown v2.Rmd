@@ -441,7 +441,7 @@ cleaning_T34_T35 <- function(Einzelteil,data){
 #Funktion zum anpassen der Klassen der Spalten 
 ```{r}
 adjust_classes <- function(df) {
-  # Anpassung der Klassen gemäß Ihren Anforderungen
+  # Anpassung der Klassen 
   df <- df %>%
     mutate(across(c(Produktionsdatum, Fehlerhaft_Datum), as.Date),
            across(names(df[1]), as.character),
@@ -485,7 +485,7 @@ for (Einzelteil in names(list_of_parts)) {
 
 
 Einzelteile_full <- tibble(
-  ID = character(),
+  ID_Einzelteil = character(),
   Produktionsdatum = as.Date(NA),
   Herstellernummer = numeric(),
   Werksnummer = numeric(),
