@@ -560,6 +560,9 @@ for(file in file_list){
 ```{r}
 
 cleaner_komponente_Autos <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
     
     if (ncol(data) == 8) {
       column_vector <- colnames(data)
@@ -770,3 +773,165 @@ for(Fahrzeug in names(list_of_cars)){
 
 ```
 
+# Joining der Fahrzeug Bestandslisten und joining mit Fahrzeuge_full
+```{r}
+list_of_cars_clean_be <- list()
+
+Fahrzeuge_full_be <- tibble(
+  ID_Karosserie = character(),
+  ID_Schaltung = character(),
+  ID_Sitze = character(),
+  ID_Motor = character(),
+  ID_Fahrzeug = character()
+)
+
+cleaner_cars <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ11.csv)
+B_OEM1_11 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ12.csv)
+B_OEM1_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ21.csv)
+B_OEM2_21 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner_cars(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ22.csv)
+B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM1_11)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM1_12)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_21)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_22)
+
+```
+
+# Joining Full Fahrzeug Bestandsliste mit Fahrzeuge
+```{r}
+Fahrzeuge <- left_join(Fahrzeuge_full_be, Fahrzeuge_full, by="ID_Fahrzeug")
+Fahrzeuge <- Fahrzeuge %>%
+  rename(ID_Komponente = ID_Karosserie) %>%
+  rename(Fahrzeug_Produktionsdatum = Produktionsdatum) %>%
+  rename(Fahrzeug_Fehlerhaft_Datum = Fehlerhaft_Datum) %>%
+  rename(Fahrzeug_Werksnummer = Werksnummer) %>%
+  rename(Fahrzeug_Fehlerhaft = Fehlerhaft) %>%
+  rename(Fahrzeug_Herstellernummer = Herstellernummer) %>%
+  rename(Fahrzeug_Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung)
+
+```
+
+```{r}
+Komponenten_full <- Komponenten_full %>%
+  rename(Komponente_Produktionsdatum = Produktionsdatum) %>%
+  rename(Komponente_Fehlerhaft_Datum = Fehlerhaft_Datum) %>%
+  rename(Komponente_Werksnummer = Werksnummer) %>%
+  rename(Komponente_Fehlerhaft = Fehlerhaft) %>%
+  rename(Komponente_Herstellernummer = Herstellernummer) %>%
+  rename(Komponente_Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung)
+```
+
+
+```{r}
+cleaner_komponente <- function(data) {
+    data$X <- NULL
+    data$X1 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else if (ncol(data) <7){
+      return(data)
+    }
+}
+
+
+
+cleandata <- cleaner_komponente(list_of_bestandcomponents$Bestandteile_Komponente_K4.csv)
+K4_Best <- cleandata[!is.na(cleandata$ID_K4), ]
+K4_Best <- K4_Best %>%
+  rename(ID_Komponente = ID_K4)
+  
+cleandata <- cleaner_komponente(list_of_bestandcomponents$Bestandteile_Komponente_K5.csv)
+K5_Best <- cleandata[!is.na(cleandata$ID_K5), ]
+K5_Best <- K5_Best %>%
+  rename(ID_Komponente = ID_K5)
+
+cleandata <- cleaner_komponente(list_of_bestandcomponents$Bestandteile_Komponente_K6.csv)
+K6_Best <- cleandata[!is.na(cleandata$ID_K6), ]
+K5_Best <- K6_Best %>%
+  rename(ID_Komponente = ID_K6)
+
+cleandata <- cleaner_komponente(list_of_bestandcomponents$Bestandteile_Komponente_K7.csv)
+K7_Best <- cleandata[!is.na(cleandata$ID_K7), ]
+K7_Best <- K7_Best %>%
+  rename(ID_Komponente = ID_K7)
+
+Komponenten_full_be <- full_join(K4_Best,K5_Best)
+Komponenten_full_be <- full_join(Komponenten_full_be,K6_Best)
+Komponenten_full_be <- full_join(Komponenten_full_be,K7_Best)
+```
+
+# Join Komponenten Bestandsliste mit Komponenten
+
+```{r}
+Komponenten_full <- Komponenten_full %>%
+  rename(ID_Komponente = ID_Karosserie)
+
+Komponenten <- left_join(Komponenten_full_be, Komponenten_full, by="ID_Komponente")
+
+```
+
+  
+```{r}
+Komponenten <- Komponenten %>%
+  rename(Komponente_Produktionsdatum = Produktionsdatum) %>%
+  rename(Komponente_Fehlerhaft_Datum = Fehlerhaft_Datum) %>%
+  rename(Komponente_Werksnummer = Werksnummer) %>%
+  rename(Komponente_Fehlerhaft = Fehlerhaft) %>%
+  rename(Komponente_Herstellernummer = Herstellernummer) %>%
+  rename(Komponente_Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung)
+```
+
+#Join Komponenten und Fahrzeuge
+```{r}
+Fahrzeuge_u_Komponente <- left_join(Fahrzeuge, Komponenten, by="ID_Komponente")
+```
