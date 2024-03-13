@@ -943,4 +943,44 @@ objects_to_remove <- objects[objects != "Große_Datenbank"]
 rm(list = objects_to_remove)
 ```
 
+Shiny app start
+```{r}
+install.packages("shiny")
+library(shiny)
 
+# Define UI
+ui <- fluidPage(
+  titlePanel("Simple Shiny App"),
+  theme = "lightsteelblue",                  # Farbe die wir in der Case Study nutzen müssen
+  
+  tags$head(
+    tags$link(rel = "icon", type = "image/png", href = "logo.png") ### Versuch das als favicon das QW logo zu nutzen
+  ),
+  
+  sidebarLayout(
+    sidebarPanel(
+      textInput("suche_id", "Suche Fahrzeug ID:")
+    ),
+    
+    mainPanel(
+      textOutput("defect_message")
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output) {
+  
+  # Reactive expression to check if the entered ID is defective
+  output$defect_message <- renderText({
+    id <- input$suche_id
+    
+    if (id %in% Große_Datenbank$ID_Fahrzeug) {
+      return("Ihr Fahrzeug ist defekt.")
+    } 
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
