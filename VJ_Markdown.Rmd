@@ -382,15 +382,15 @@ B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
 
 Geodaten einlesen
 ```{r}
-geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "OEM_Werke_2017-07-04_TrR.csv", "Tier1_Werke_2017-07-11_v1.2_TrR.csv", "Tier2_Werke_2017-07-11_v1.2_TrR.csv")
-col_names_v1 <- c("","X1", "ID_T39.x", "Produktionsdatum.x", "Herstellernummer.x", "Werksnummer.x", 
-               "Fehlerhaft.x", "Fehlerhaft_Datum.x", "Fehlerhaft_Fahrleistung.x", 
-               "ID_T39.y", "Produktionsdatum.y", "Herstellernummer.y", "Werksnummer.y", 
-               "Fehlerhaft.y", "Fehlerhaft_Datum.y", "Fehlerhaft_Fahrleistung.y")
-#Erzeugung leere Liste für die Komponenten
+geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
+#col_names_v1 <- c("","X1", "ID_T39.x", "Produktionsdatum.x", "Herstellernummer.x", "Werksnummer.x", 
+#               "Fehlerhaft.x", "Fehlerhaft_Datum.x", "Fehlerhaft_Fahrleistung.x", 
+#               "ID_T39.y", "Produktionsdatum.y", "Herstellernummer.y", "Werksnummer.y", 
+#               "Fehlerhaft.y", "Fehlerhaft_Datum.y", "Fehlerhaft_Fahrleistung.y")
+#Erzeugung leere Liste für die Geodaten
 list_of_geo <- list()
 
-folder_path <- "./Geodaten/Geodaten"
+folder_path <- "./Data"
 
 file_list <- list.files(folder_path)
 
@@ -457,15 +457,32 @@ cleaner <- function(data) {
 cleandata <- cleaner(list_of_geo$"Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv")
 Gemeinden <- cleandata[!is.na(cleandata$Postleitzahl), ]
 
-OEM_Werke <- cleaner(list_of_geo$"OEM_Werke_2017-07-04_TrR.csv")
+cleandata <- cleaner(list_of_geo$"Zulassungen_alle_Fahrzeuge.csv")
+Zulassungen <- cleandata[!is.na(cleandata$IDNummer), ]
+
+#OEM_Werke <- cleaner(list_of_geo$"OEM_Werke_2017-07-04_TrR.csv")
 
 
-cleandata <- cleaner(list_of_geo$"Tier1_Werke_2017-07-11_v1.2_TrR.csv")
-Tier1 <- cleandata[!is.na(cleandata$PLZ), ]
+#cleandata <- cleaner(list_of_geo$"Tier1_Werke_2017-07-11_v1.2_TrR.csv")
+#Tier1 <- cleandata[!is.na(cleandata$PLZ), ]
 
-cleandata <- cleaner(list_of_geo$"Tier2_Werke_2017-07-11_v1.2_TrR.csv")
-Tier2 <- cleandata[!is.na(cleandata$PLZ), ]
+#cleandata <- cleaner(list_of_geo$"Tier2_Werke_2017-07-11_v1.2_TrR.csv")
+#Tier2 <- cleandata[!is.na(cleandata$PLZ), ]
   
- 
+Zulassungen <- Zulassungen %>%
+  rename(ID_Fahrzeug = IDNummer) %>%
+  rename(Gemeinde = Gemeinden)
+
+Zulassungen_Gemeinde <- left_join(Zulassungen, Gemeinden, by="Gemeinde")
+
+Große_Datenbank <- left_join(Große_Datenbank, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+
+
+objects <- ls()
+
+objects_to_remove <- objects[objects != "Große_Datenbank"]
+
+# Remove those objects from the environment
+rm(list = objects_to_remove)
 
 ```
