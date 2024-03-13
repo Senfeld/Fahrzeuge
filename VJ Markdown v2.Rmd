@@ -933,5 +933,14 @@ Komponenten <- Komponenten %>%
 
 #Join Komponenten und Fahrzeuge
 ```{r}
-Fahrzeuge_u_Komponente <- left_join(Fahrzeuge, Komponenten, by="ID_Komponente")
+#Fahrzeuge_u_Komponente <- left_join(Fahrzeuge, Komponenten, by="ID_Komponente")
+
+objects <- ls()
+
+objects_to_remove <- objects[objects != "Große_Datenbank"]
+
+# Remove those objects from the environment
+rm(list = objects_to_remove)
 ```
+
+
