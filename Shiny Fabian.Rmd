@@ -46,7 +46,6 @@ Hier wird das User-Interface erstellt
 ui <- fluidPage(
   titlePanel("Analyse - Fehlerhafte Bauteile"),
   theme = "lightsteelblue",
-  theme = "steelblue",
   tabsetPanel(type = "tabs",
               tabPanel("Heatmap", leafletOutput(
                 "map"
