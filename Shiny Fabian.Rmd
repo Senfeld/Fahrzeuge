@@ -11,21 +11,17 @@ knitr::opts_chunk$set(echo = TRUE)
 #Pakete
 Benötigte Pakete aufrufen
 ```{r}
-<<<<<<< HEAD
 install.packages("tidyr")
 install.packages("tidyverse")
 install.packages("dplyr")
 library(dplyr)
 library(tidyverse)
 library(tidyr)
-=======
->>>>>>> 0960f82df4a5553ede11fd4b66cc35f1e5ff8076
 library(shiny)
 library(leaflet)
 library(leaflet.extras)
 ```
 
-<<<<<<< HEAD
 #Gemeinde_Fehler_Häufigkeit vorbereiten
 ```{r}
 Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>%
@@ -49,11 +45,8 @@ Hier wird das User-Interface erstellt
 
 ui <- fluidPage(
   titlePanel("Analyse - Fehlerhafte Bauteile"),
-<<<<<<< HEAD
   theme = "lightsteelblue",
-=======
   theme = "steelblue",
->>>>>>> 0960f82df4a5553ede11fd4b66cc35f1e5ff8076
   tabsetPanel(type = "tabs",
               tabPanel("Heatmap", leafletOutput(
                 "map"
@@ -96,21 +89,12 @@ server <- function(input,output,session){
   
   #Erstellung Heatmap
 
-<<<<<<< HEAD
     observeEvent(input$map, {
       leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
         addHeatmap(
           lat = ~Breitengrad,  # Längengrade aus dem DataFrame
           lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
-          intensity = 5,  # Intensität basierend auf der Anzahl der Fehler
-=======
-    observe({
-      leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
-        addHeatmap(
-          lng = ~Laengengrad,  # Längengrade aus dem DataFrame
-          lat = ~Breitengrad,  # Breitengrade aus dem DataFrame
           intensity = ~Anzahl_Fehler,  # Intensität basierend auf der Anzahl der Fehler
->>>>>>> 0960f82df4a5553ede11fd4b66cc35f1e5ff8076
           blur = 20,  # Weichzeichner-Effekt
           max = 5,  # Maximale Intensität
           radius = 10  # Radius der Heatmap-Punkte
@@ -123,11 +107,8 @@ server <- function(input,output,session){
   output$defect_message <- renderText({
     
     #Button eingebaut bevor nach ID gesucht wird
-<<<<<<< HEAD
     req(input$checkButton)
-=======
     input$checkButton
->>>>>>> 0960f82df4a5553ede11fd4b66cc35f1e5ff8076
     
     id <- isolate(input$suche_id)
     
