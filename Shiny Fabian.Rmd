@@ -14,42 +14,34 @@ Benötigte Pakete aufrufen
 install.packages("tidyr")
 install.packages("tidyverse")
 install.packages("dplyr")
+install.packages("ggplot2")
 library(dplyr)
 library(tidyverse)
 library(tidyr)
 library(shiny)
 library(leaflet)
 library(leaflet.extras)
+library(ggplot2)
 ```
 
 #Gemeinde_Fehler_Häufigkeit vorbereiten
 ```{r}
 Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>%
-  select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad)
+  select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad, Postleitzahl)
 
 Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
 Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
-  
-na_indices <- which(is.na(Gemeinde_Fehler_Häufigkeit$Laengengrad))
-
 ```
 
 
-
-=======
->>>>>>> 0960f82df4a5553ede11fd4b66cc35f1e5ff8076
-#UI 
-
-Hier wird das User-Interface erstellt 
+#Hier wird das User-Interface erstellt 
 ```{r}
 
 ui <- fluidPage(
   titlePanel("Analyse - Fehlerhafte Bauteile"),
   theme = "lightsteelblue",
   tabsetPanel(type = "tabs",
-              tabPanel("Heatmap", leafletOutput(
-                "map"
-              )),
+              tabPanel("Heatmap", leafletOutput("map")),
               tabPanel("Produktionsmenge", fluidRow()),
               tabPanel("Suche - Fahrzeug",fluidRow(
                   sidebarLayout(
@@ -63,7 +55,14 @@ ui <- fluidPage(
                   )
                 )
               )),
-              tabPanel("Vergleiche Nutzungsdauer", fluidRow())
+              tabPanel("Vergleiche Nutzungsdauer", 
+                       fluidRow(
+                         column(6, textInput("zip_code1", "Enter Zip Code 1:")),
+                         column(6, textInput("zip_code2", "Enter Zip Code 2:"))
+                         ),
+                       actionButton("boxplot_generieren", "Generate Box Plot"),
+                       plotOutput("boxplot")
+                )
               
               )
   
@@ -91,9 +90,9 @@ server <- function(input,output,session){
     observeEvent(input$map, {
       leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
         addHeatmap(
-          lat = ~Breitengrad,  # Längengrade aus dem DataFrame
-          lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
-          intensity = ~Anzahl_Fehler,  # Intensität basierend auf der Anzahl der Fehler
+          lat = Gemeinde_Fehler_Häufigkeit$Breitengrad,  # Längengrade aus dem DataFrame
+          lng = Gemeinde_Fehler_Häufigkeit$Laengengrad,  # Breitengrade aus dem DataFrame
+          intensity = Gemeinde_Fehler_Häufigkeit$Fahrzeug_Fehlerhaft,  # Intensität basierend auf der Anzahl der Fehler
           blur = 20,  # Weichzeichner-Effekt
           max = 5,  # Maximale Intensität
           radius = 10  # Radius der Heatmap-Punkte
@@ -117,7 +116,21 @@ server <- function(input,output,session){
       return("Ihr Fahrzeug ist nicht defekt!")
     } 
   })
-  
+  observeEvent(input$boxplot_generieren, {
+    zip_code1 <- isolate(input$zip_code1)
+    zip_code2 <- isolate(input$zip_code2)
+    
+    # Filter data for the entered zip codes
+    Große_Datenbank$Postleitzahl <- as.character(Große_Datenbank$Postleitzahl)
+    DB <- subset(Große_Datenbank, Postleitzahl %in% c(zip_code1, zip_code2))
+    
+    # Create box plot
+    output$boxplot <- renderPlot({
+      ggplot(DB, aes(x = factor(Postleitzahl), y = Fahrzeug_Fehlerhaft_Fahrleistung)) +
+        geom_boxplot() +
+        labs(x = "Zip Code", y = "Fehlerhaft", title = "Boxplots")
+    })
+  })
   
 }
 
