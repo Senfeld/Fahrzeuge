@@ -1,0 +1,130 @@
+---
+title: "Shiny Fabian"
+output: html_document
+date: "2024-03-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Pakete
+Benötigte Pakete aufrufen
+```{r}
+install.packages("tidyr")
+install.packages("tidyverse")
+install.packages("dplyr")
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(shiny)
+library(leaflet)
+library(leaflet.extras)
+```
+
+#Gemeinde_Fehler_Häufigkeit vorbereiten
+```{r}
+Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>%
+  select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad)
+
+Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
+Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
+  
+na_indices <- which(is.na(Gemeinde_Fehler_Häufigkeit$Laengengrad))
+
+```
+
+
+
+#UI 
+
+Hier wird das User-Interface erstellt 
+```{r}
+
+ui <- fluidPage(
+  titlePanel("Analyse - Fehlerhafte Bauteile"),
+  theme = "lightsteelblue",
+  tabsetPanel(type = "tabs",
+              tabPanel("Heatmap", leafletOutput(
+                "map"
+              )),
+              tabPanel("Produktionsmenge", fluidRow()),
+              tabPanel("Suche - Fahrzeug",fluidRow(
+                  sidebarLayout(
+                  sidebarPanel(
+                    textInput("suche_id", "Suche Fahrzeug ID:"),
+                    actionButton("checkButton","Suche")
+                  ),
+                  
+                  mainPanel(
+                    textOutput("defect_message")
+                  )
+                )
+              )),
+              tabPanel("Vergleiche Nutzungsdauer", fluidRow())
+              
+              )
+  
+  
+  
+)
+
+```
+
+
+
+#Server
+Die App mit Inhalt füllen 
+```{r}
+
+server <- function(input,output,session){
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%  # Fügt OpenStreetMap-Kacheln hinzu
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
+  })
+  
+  #Erstellung Heatmap
+
+    observeEvent(input$map, {
+      leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
+        addHeatmap(
+          lat = ~Breitengrad,  # Längengrade aus dem DataFrame
+          lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
+          intensity = 5,  # Intensität basierend auf der Anzahl der Fehler
+          blur = 20,  # Weichzeichner-Effekt
+          max = 5,  # Maximale Intensität
+          radius = 10  # Radius der Heatmap-Punkte
+        )
+    })
+
+  
+  
+  #Reactive expression to check if the entered ID is defective
+  output$defect_message <- renderText({
+    
+    #Button eingebaut bevor nach ID gesucht wird
+    req(input$checkButton)
+    
+    id <- isolate(input$suche_id)
+    
+    if (id %in% Große_Datenbank$ID_Fahrzeug) {
+      return("Ihr Fahrzeug ist defekt.")
+    }else{
+      return("Ihr Fahrzeug ist nicht defekt!")
+    } 
+  })
+  
+  
+}
+
+
+```
+
+#Ausführung
+```{r}
+
+shinyApp(ui = ui, server = server)
+
+
+```
