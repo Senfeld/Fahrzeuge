@@ -11,12 +11,13 @@ knitr::opts_chunk$set(echo = TRUE)
 #Pakete
 Benötigte Pakete aufrufen
 ```{r}
-install.packages("tidyr")
+
 install.packages("tidyverse")
-install.packages("dplyr")
-library(dplyr)
+install.packages("leaflet")
+install.packages("leaflet.extras")
+
+
 library(tidyverse)
-library(tidyr)
 library(shiny)
 library(leaflet)
 library(leaflet.extras)
@@ -24,13 +25,13 @@ library(leaflet.extras)
 
 #Gemeinde_Fehler_Häufigkeit vorbereiten
 ```{r}
-Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>%
-  select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad)
-
-Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
-Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
-  
-na_indices <- which(is.na(Gemeinde_Fehler_Häufigkeit$Laengengrad))
+# Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>%
+#   select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad)
+# 
+# Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
+# Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
+#   
+# na_indices <- which(is.na(Gemeinde_Fehler_Häufigkeit$Laengengrad))
 
 ```
 
@@ -48,7 +49,7 @@ ui <- fluidPage(
   theme = "lightsteelblue",
   tabsetPanel(type = "tabs",
               tabPanel("Heatmap", leafletOutput(
-                "map"
+                "map", width = "auto", height = "1000px"
               )),
               tabPanel("Produktionsmenge", fluidRow()),
               tabPanel("Suche - Fahrzeug",fluidRow(
@@ -88,17 +89,20 @@ server <- function(input,output,session){
   
   #Erstellung Heatmap
 
-    observeEvent(input$map, {
-      leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
-        addHeatmap(
-          lat = ~Breitengrad,  # Längengrade aus dem DataFrame
-          lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
-          intensity = ~Anzahl_Fehler,  # Intensität basierend auf der Anzahl der Fehler
-          blur = 20,  # Weichzeichner-Effekt
-          max = 5,  # Maximale Intensität
-          radius = 10  # Radius der Heatmap-Punkte
-        )
-    })
+    # observeEvent(input$map, {
+    #   leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
+    #     addHeatmap(
+    #       lat = ~Breitengrad,  # Längengrade aus dem DataFrame
+    #       lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
+    #       intensity = ~Anzahl_Fehler,  # Intensität basierend auf der Anzahl der Fehler
+    #       blur = 20,  # Weichzeichner-Effekt
+    #       max = 5,  # Maximale Intensität
+    #       radius = 10  # Radius der Heatmap-Punkte
+    #     )
+    # })
+  
+  
+
 
   
   
