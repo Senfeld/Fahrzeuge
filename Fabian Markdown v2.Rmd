@@ -287,7 +287,7 @@ cleaner_einzelteile <- function(Einzelteil){
     if(Einzelteil %in% Gruppe1){
     
      #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
-     #clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
       clean_data <- clean_data[!is.na(clean_data[1]),]
      
      clean_data <- clean_data %>%
@@ -307,7 +307,7 @@ cleaner_einzelteile <- function(Einzelteil){
     }else if(Einzelteil %in% Gruppe2){
       
       #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben
-      #clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
       clean_data <- clean_data[!is.na(clean_data[1]),]
        # 
        # clean_data <- clean_data %>% 
@@ -393,7 +393,7 @@ cleaning_T34_T35 <- function(Einzelteil,data){
   T34_clean$`origin"1`<- NULL 
   
   #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
-  #T34_clean <- T34_clean[!is.na(T34_clean$Fehlerhaft_Datum),]
+  T34_clean <- T34_clean[!is.na(T34_clean$Fehlerhaft_Datum),]
   T34_clean <- T34_clean[!is.na(T34_clean$ID_T34),]
     
   return(T34_clean)
@@ -401,10 +401,7 @@ cleaning_T34_T35 <- function(Einzelteil,data){
   }else if(Einzelteil == "Einzelteil_T35.txt"){
     
     T35_clean <- data
-    
-      #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
-    #T35_clean <- T35[!is.na(T35$Fehlerhaft_Datum.x),]
-  
+
     #entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
     T35_clean$Fehlerhaft_Fahrleistung.x <- str_replace_all(T35_clean$Fehlerhaft_Fahrleistung.x, '\"[0-9]+\"', '')
    
@@ -431,7 +428,7 @@ cleaning_T34_T35 <- function(Einzelteil,data){
       select(names(T35_clean)[1:7])
     
     T35_clean <- T35_clean[!is.na(T35_clean$ID_T35),]
-
+    T35_clean <- T35_clean[!is.na(T35_clean$Fehlerhaft_Datum),]
     
     return(T35_clean)
     
@@ -884,6 +881,43 @@ Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_22)
 
 ```
 
+##Geodaten einlesen
+```{r}
+geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
+#col_names_v1 <- c("","X1", "ID_T39.x", "Produktionsdatum.x", "Herstellernummer.x", "Werksnummer.x", 
+#               "Fehlerhaft.x", "Fehlerhaft_Datum.x", "Fehlerhaft_Fahrleistung.x", 
+#               "ID_T39.y", "Produktionsdatum.y", "Herstellernummer.y", "Werksnummer.y", 
+#               "Fehlerhaft.y", "Fehlerhaft_Datum.y", "Fehlerhaft_Fahrleistung.y")
+#Erzeugung leere Liste für die Geodaten
+
+
+list_of_geo <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% geo_li){
+    if(file.exists(full_path)){
+      data <- readLines(full_path)
+      
+      #Ersetze L„ngengrad mit Laengengrad
+      data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
+      data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_geo[[file]] <- read.table(text = data, sep = ";", header= TRUE)
+      }
+    }
+}
+
+```
+
+
 
 
 #Joining der Fahrzeuge, Komponenten und Einzelteile 
@@ -923,4 +957,100 @@ for(Einzelteil in names(list_of_parts_clean)){
 ```
 
 
+#Filtern der Datenbank nach relevanten Daten 
+```{r}
+Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
 
+```
+
+
+```{r}
+
+#Kann man auf andere Funktion übertragen
+cleaner <- function(data) {
+    data$X <- NULL
+    data$X.1 <- NULL
+    data$X.2 <- NULL
+    data$X.3 <- NULL
+    data$X.4 <- NULL
+    data$X.5 <- NULL
+    data$X.6 <- NULL
+    data$X.7 <- NULL
+    data$X.8 <- NULL
+    data$X.9 <- NULL
+    data$X.10 <- NULL
+    data$X.11 <- NULL
+    data$X.12 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+  
+cleandata <- cleaner(list_of_geo$"Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv")
+Gemeinden <- cleandata[!is.na(cleandata$Postleitzahl), ]
+
+cleandata <- cleaner(list_of_geo$"Zulassungen_alle_Fahrzeuge.csv")
+Zulassungen <- cleandata[!is.na(cleandata$IDNummer), ]
+
+#OEM_Werke <- cleaner(list_of_geo$"OEM_Werke_2017-07-04_TrR.csv")
+
+
+#cleandata <- cleaner(list_of_geo$"Tier1_Werke_2017-07-11_v1.2_TrR.csv")
+#Tier1 <- cleandata[!is.na(cleandata$PLZ), ]
+
+#cleandata <- cleaner(list_of_geo$"Tier2_Werke_2017-07-11_v1.2_TrR.csv")
+#Tier2 <- cleandata[!is.na(cleandata$PLZ), ]
+  
+Zulassungen <- Zulassungen %>%
+  rename(ID_Fahrzeug = IDNummer) %>%
+  rename(Gemeinde = Gemeinden)
+
+Zulassungen_Gemeinde <- left_join(Zulassungen, Gemeinden, by="Gemeinde")
+
+Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+
+
+
+```
+
+#Auswertung der Daten und Vorbereitung für Shiny-App 
+
+##Vorbereitung für die Heatmap 
+Zuerst zählen wir, wie oft fehlerhafte Autos in der jeweiligen Gemeinde vorkamen 
+
+```{r}
+Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>% 
+  group_by(Gemeinde) %>% 
+  summarize(Anzahl_Fehler = n(),
+            Laengengrad = first(Laengengrad),  
+            Breitengrad = first(Breitengrad))
+
+
+# Ersetze "," durch "." und konvertiere dann in Numeric
+Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad))
+Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad))
+
+Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Laengengrad)
+Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Breitengrad)
+
+
+```
