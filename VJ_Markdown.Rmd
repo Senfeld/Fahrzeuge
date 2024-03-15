@@ -569,4 +569,12 @@ OEMs <- OEMs %>%
   rename(OEM_Postleitzahl = Postleitzahl)
 
 Große_Datenbank2 <- left_join(Große_Datenbank2, OEMs, by="Fahrzeug_Werksnummer")
+
+
+  
+```
+
+```{r}
+OEM_Produktionsmengen <- Große_Datenbank2 %>%
+  filter(!is.na(OEM_Ort))
 ```
