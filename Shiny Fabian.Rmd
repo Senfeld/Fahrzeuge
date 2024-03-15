@@ -101,7 +101,7 @@ server <- function(input,output,session){
         max = 10,
         blur = 20
       ) %>% 
-      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriere die Karte auf Deutschland
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
       
     
   })
@@ -133,7 +133,7 @@ server <- function(input,output,session){
     output$boxplot <- renderPlot({
       ggplot(DB, aes(x = factor(Postleitzahl), y = Fahrzeug_Fehlerhaft_Fahrleistung)) +
         geom_boxplot() +
-        labs(x = "Zip Code", y = "Fehlerhaft", title = "Boxplots")
+        labs(x = "Zip Code", y = "Nutzungsdauer", title = "Boxplots")
     })
   })
   
