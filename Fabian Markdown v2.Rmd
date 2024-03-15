@@ -1053,5 +1053,10 @@ Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fe
 Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Laengengrad)
 Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Breitengrad)
 
+Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
+
 
 ```
+
+
+

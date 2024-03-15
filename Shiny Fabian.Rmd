@@ -13,42 +13,19 @@ Benötigte Pakete aufrufen
 ```{r}
 
 install.packages("tidyverse")
-<<<<<<< HEAD
+
 install.packages("leaflet")
 install.packages("leaflet.extras")
-
-
-=======
-install.packages("dplyr")
 install.packages("ggplot2")
-library(dplyr)
->>>>>>> c45ad34b3303d866016c1bd56b996b8a5c6f222b
+
 library(tidyverse)
 library(shiny)
 library(leaflet)
 library(leaflet.extras)
 library(ggplot2)
+
 ```
 
-#Gemeinde_Fehler_Häufigkeit vorbereiten
-```{r}
-<<<<<<< HEAD
-# Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>%
-#   select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad)
-# 
-# Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
-# Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
-#   
-# na_indices <- which(is.na(Gemeinde_Fehler_Häufigkeit$Laengengrad))
-
-=======
-Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>%
-  select(ID_Fahrzeug, Fahrzeug_Fehlerhaft, Gemeinde, Zulassung, Laengengrad, Breitengrad, Postleitzahl)
-
-Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad), na.rm = TRUE)
-Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad), na.rm = TRUE)
->>>>>>> c45ad34b3303d866016c1bd56b996b8a5c6f222b
-```
 
 
 #Hier wird das User-Interface erstellt 
@@ -58,13 +35,11 @@ ui <- fluidPage(
   titlePanel("Analyse - Fehlerhafte Bauteile"),
   theme = "lightsteelblue",
   tabsetPanel(type = "tabs",
-<<<<<<< HEAD
+
               tabPanel("Heatmap", leafletOutput(
                 "map", width = "auto", height = "1000px"
               )),
-=======
-              tabPanel("Heatmap", leafletOutput("map")),
->>>>>>> c45ad34b3303d866016c1bd56b996b8a5c6f222b
+
               tabPanel("Produktionsmenge", fluidRow()),
               tabPanel("Suche - Fahrzeug",fluidRow(
                   sidebarLayout(
@@ -102,44 +77,36 @@ Die App mit Inhalt füllen
 ```{r}
 
 server <- function(input,output,session){
+
+#   output$map <- renderLeaflet({
+#     leaflet() %>%
+#       addProviderTiles(providers$CartoDB.DarkMatter) %>%
+#       addCircles(
+#         lat = Gemeinde_Fehler_Häufigkeit$Breitengrad,
+#         lng = Gemeinde_Fehler_Häufigkeit$Laengengrad,
+#         popup = Gemeinde_Fehler_Häufigkeit$Gemeinde,
+#         radius = Gemeinde_Fehler_Häufigkeit$Anzahl_Fehler/20
+#       ) %>%
+#       setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
+# })
+  
+  
   output$map <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%  # Fügt OpenStreetMap-Kacheln hinzu
-      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
+       addTiles() %>%
+      addHeatmap(
+        data = Gemeinde_Fehler_Häufigkeit,
+        lat= ~Breitengrad,
+        lng= ~Laengengrad,
+        intensity = ~Anzahl_Fehler,
+        radius = 10,
+        max = 10,
+        blur = 20
+      ) %>% 
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriere die Karte auf Deutschland
+      
+    
   })
-  
-  #Erstellung Heatmap
-
-<<<<<<< HEAD
-    # observeEvent(input$map, {
-    #   leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
-    #     addHeatmap(
-    #       lat = ~Breitengrad,  # Längengrade aus dem DataFrame
-    #       lng = ~Laengengrad,  # Breitengrade aus dem DataFrame
-    #       intensity = ~Anzahl_Fehler,  # Intensität basierend auf der Anzahl der Fehler
-    #       blur = 20,  # Weichzeichner-Effekt
-    #       max = 5,  # Maximale Intensität
-    #       radius = 10  # Radius der Heatmap-Punkte
-    #     )
-    # })
-  
-  
-
-=======
-    observeEvent(input$map, {
-      leafletProxy("map", data = Gemeinde_Fehler_Häufigkeit) %>%
-        addHeatmap(
-          lat = Gemeinde_Fehler_Häufigkeit$Breitengrad,  # Längengrade aus dem DataFrame
-          lng = Gemeinde_Fehler_Häufigkeit$Laengengrad,  # Breitengrade aus dem DataFrame
-          intensity = Gemeinde_Fehler_Häufigkeit$Fahrzeug_Fehlerhaft,  # Intensität basierend auf der Anzahl der Fehler
-          blur = 20,  # Weichzeichner-Effekt
-          max = 5,  # Maximale Intensität
-          radius = 10  # Radius der Heatmap-Punkte
-        )
-    })
->>>>>>> c45ad34b3303d866016c1bd56b996b8a5c6f222b
-
-  
   
   #Reactive expression to check if the entered ID is defective
   output$defect_message <- renderText({
@@ -160,9 +127,9 @@ server <- function(input,output,session){
     zip_code1 <- isolate(input$zip_code1)
     zip_code2 <- isolate(input$zip_code2)
     
-    # Filter data for the entered zip codes
-    Große_Datenbank$Postleitzahl <- as.character(Große_Datenbank$Postleitzahl)
-    DB <- subset(Große_Datenbank, Postleitzahl %in% c(zip_code1, zip_code2))
+    # Filter data for the entered zip codes (Hier große Datenbank genommen????)
+    Große_Datenbank2$Postleitzahl <- as.character(Große_Datenbank2$Postleitzahl)
+    DB <- subset(Große_Datenbank2, Postleitzahl %in% c(zip_code1, zip_code2))
     
     # Create box plot
     output$boxplot <- renderPlot({
