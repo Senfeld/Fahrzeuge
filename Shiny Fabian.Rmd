@@ -38,7 +38,14 @@ ui <- fluidPage(
                 "map", width = "auto", height = "1000px"
               )),
 
-              tabPanel("Produktionsmenge", fluidRow()),
+              tabPanel("Produktionsmenge", 
+                       fluidRow(
+                         column(6, 
+                                selectInput("ort_dropdown", "OEM Werk auswählen:", 
+                                            choices = c("NUERNBERG", "BONN", "BIELEFELD", "GOETTINGEN", "REGENSBURG"))),
+                         column(6)
+                       )
+              ),
               tabPanel("Suche - Fahrzeug",fluidRow(
                   sidebarLayout(
                   sidebarPanel(
@@ -104,6 +111,26 @@ server <- function(input,output,session){
       setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
       
     
+  })
+  
+  standpunkt <- reactive({
+    selected_location <- input$ort_dropdown
+    
+    # Filter data based on selected location
+    OEM_Standpunkt <- OEM_Produktionsmengen %>% 
+      filter(OEM_ORT == selected_location)
+    
+    return(OEM_Standpunkt)
+  })
+  
+  # Generate histogram based on filtered data
+  output$histogram <- renderPlot({
+    OEM_Standpunkt <- standpunkt()
+    
+    ggplot(OEM_Standpunkt, aes(x = Fahrzeug_Fehlerhaft_Datum)) +
+      geom_histogram(binwidth = 1) +
+      labs(x = "Datum Fehlerhaft", y = "Frequency", title = "Histogram") +
+      theme_minimal()
   })
   
   #Reactive expression to check if the entered ID is defective
