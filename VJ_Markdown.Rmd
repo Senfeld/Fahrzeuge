@@ -486,3 +486,87 @@ objects_to_remove <- objects[objects != "Große_Datenbank"]
 rm(list = objects_to_remove)
 
 ```
+
+OEM Werke importieren und säubern
+
+```{r}
+OEM_li <- c("OEM_Werke_2017-07-04_TrR.csv")
+########################################### "Tier1_Werke_2017-07-11_v1.2_TrR.csv", "Tier2_Werke_2017-07-11_v1.2_TrR.csv" werden nicht einbezogen weil in der Case Study nur nach OEM Werken gefragt wird! (Frage B der Case Study)
+
+list_of_OEM <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% OEM_li){
+    if(file.exists(full_path)){
+      data <- readLines(full_path)
+      
+      #Ersetze L„ngengrad mit Laengengrad
+      data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
+      data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_OEM[[file]] <- read.table(text = data, sep = ";", header= TRUE)
+      }
+    }
+}
+
+#Säubern der OEM datei
+cleaner <- function(data) {
+    data$X <- NULL
+    data$X.1 <- NULL
+    data$X.2 <- NULL
+    data$X.3 <- NULL
+    data$X.4 <- NULL
+    data$X.5 <- NULL
+    data$X.6 <- NULL
+    data$X.7 <- NULL
+    data$X.8 <- NULL
+    data$X.9 <- NULL
+    data$X.10 <- NULL
+    data$X.11 <- NULL
+    data$X.12 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+  
+cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
+OEMs <- cleandata[!is.na(cleandata$ORT), ]
+OEMs$Werk <- sub("^O", "", OEMs$Werk)
+OEMs <- OEMs %>%
+  rename(Postleitzahl = PLZ ) %>%
+  rename(OEM_Breitengrad = Breitengrad) %>%
+  rename(OEM_Laengengrad = Laengengrad) %>%
+  rename(OEM_Ort = ORT) %>%
+  mutate(Werk = as.numeric(Werk)) %>%
+  rename(Fahrzeug_Werksnummer = Werk) %>%
+  rename(OEM_Postleitzahl = Postleitzahl)
+
+Große_Datenbank2 <- left_join(Große_Datenbank2, OEMs, by="Fahrzeug_Werksnummer")
+```
