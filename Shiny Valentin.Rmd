@@ -40,12 +40,11 @@ ui <- fluidPage(
 
               tabPanel("Produktionsmenge", 
                        fluidRow(
-                         column(6, 
-                                selectInput("ort_dropdown", "OEM Werk auswählen:", 
-                                            choices = c("NUERNBERG", "BONN", "BIELEFELD", "GOETTINGEN", "REGENSBURG"))),
-                         column(6)
-                       )
-              ),
+               column(6, dateInput("from_date", "Produktionszeitraum von", value = "2012-06-01")),
+               column(6, dateInput("to_date", "Produktionszeitraum bis", value = "2014-07-31")),
+               plotOutput("boxplot")
+               )),
+             
               tabPanel("Suche - Fahrzeug",fluidRow(
                   sidebarLayout(
                   sidebarPanel(
@@ -124,13 +123,32 @@ server <- function(input,output,session){
   })
   
   # Generate histogram based on filtered data
-  output$histogram <- renderPlot({
-    OEM_Standpunkt <- standpunkt()
+  # Reactive expression to filter data based on selected date range
+  filtered_data <- reactive({
+    from_date <- input$from_date
+    to_date <- input$to_date
     
-    ggplot(OEM_Standpunkt, aes(x = Fahrzeug_Fehlerhaft_Datum)) +
-      geom_histogram(binwidth = 1) +
-      labs(x = "Datum Fehlerhaft", y = "Frequency", title = "Histogram") +
-      theme_minimal()
+    # Filter data based on selected date range
+    filtered <- subset(Große_Datenbank2, Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date)
+    return(filtered)
+  })
+  
+  # Render histogram based on filtered data
+  output$histogram <- renderPlot({
+    # Plot histogram using ggplot2
+    ggplot(filtered_data(), aes(x = OEM_Ort)) +
+      geom_histogram(binwidth = 1, position = "dodge") +
+      labs(title = "Produktionsmengen Histogram", x = "OEM Ort", y = "Count")
+  })
+  
+  observe({
+    input$from_date
+    input$to_date
+    output$histogram <- renderPlot({
+      ggplot(filtered_data(), aes(x = OEM_Ort)) +
+        geom_histogram(binwidth = 1, position = "dodge") +
+        labs(title = "Produktionsdatum Histogram", x = "Datum", y = "Count")
+    })
   })
   
   #Reactive expression to check if the entered ID is defective
