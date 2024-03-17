@@ -477,11 +477,28 @@ Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Ein
 
 cols <- c("Produktionsdatum","Herstellernummer", "Werksnummer","Fehlerhaft","Fehlerhaft_Datum","Fehlerhaft_Fahrleistung")
 
-for (Einzelteil in names(list_of_parts)) {
+
   
   
-  list_of_parts_clean[[Einzelteil]] <- cleaner_einzelteile(Einzelteil)
+  #list_of_parts_clean[[Einzelteil]] <- cleaner_einzelteile(Einzelteil)
+  #list_of_parts_clean <- lapply(names(list_of_parts), cleaner_einzelteile)
   
+  list_of_parts_clean <- setNames(
+    lapply(names(list_of_parts), function(Einzelteil) {
+        cleaner_einzelteile(Einzelteil)
+    }),
+    names(list_of_parts)
+  )
+  
+  list_of_parts_clean <- lapply(list_of_parts_clean, function(df) {
+  filter(df, Herstellernummer == 217)
+})
+  
+  list_of_parts_clean <- Filter(function(x) nrow(x) > 0, list_of_parts_clean)
+
+for (Einzelteil in names(list_of_parts_clean)) { 
+  
+    
   list_of_parts_clean[[Einzelteil]] <- list_of_parts_clean[[Einzelteil]] %>% 
     rename_with(
         ~ paste0(., "_T", n), 
@@ -792,7 +809,7 @@ cleaning_cars <- function(Fahrzeug){
 
     #clean_car <- adjust_classes(clean_car)
 
-    clean_car <- clean_car[!is.na(clean_car$Fehlerhaft_Datum), ]
+    #clean_car <- clean_car[!is.na(clean_car$Fehlerhaft_Datum), ]
 
     return(clean_car)
 
@@ -806,7 +823,7 @@ cleaning_cars <- function(Fahrzeug){
 
     clean_car$origin <- NULL
 
-    clean_car <- clean_car[!is.na(clean_car$Fehlerhaft_Datum), ]
+    #clean_car <- clean_car[!is.na(clean_car$Fehlerhaft_Datum), ]
 
     clean_car <- adjust_classes(clean_car)
 
@@ -1029,6 +1046,12 @@ Zulassungen_Gemeinde <- left_join(Zulassungen, Gemeinden, by="Gemeinde")
 Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
 
 
+# Ersetze "," durch "." und konvertiere dann in Numeric
+Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
+Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
+
+Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
+Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
 
 ```
 
@@ -1045,13 +1068,6 @@ Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>%
             Breitengrad = first(Breitengrad),
             Postleitzahl = first(Postleitzahl))
 
-
-# Ersetze "," durch "." und konvertiere dann in Numeric
-Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Laengengrad))
-Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(gsub(",", ".", Gemeinde_Fehler_Häufigkeit$Breitengrad))
-
-Gemeinde_Fehler_Häufigkeit$Laengengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Laengengrad)
-Gemeinde_Fehler_Häufigkeit$Breitengrad <- as.numeric(Gemeinde_Fehler_Häufigkeit$Breitengrad)
 
 Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
 

@@ -95,7 +95,7 @@ server <- function(input,output,session){
 #       setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
 # })
   
-  
+  #Heatmap - Aufgabe 
   output$map <- renderLeaflet({
     leaflet() %>%
        addTiles() %>%
@@ -112,6 +112,9 @@ server <- function(input,output,session){
       
     
   })
+  
+  
+  #Produktionsmenge - Aufgabe 
   
   standpunkt <- reactive({
     selected_location <- input$ort_dropdown
