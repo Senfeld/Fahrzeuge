@@ -42,7 +42,7 @@ ui <- fluidPage(
                        fluidRow(
                column(6, dateInput("from_date", "Produktionszeitraum von", value = "2012-06-01")),
                column(6, dateInput("to_date", "Produktionszeitraum bis", value = "2014-07-31")),
-               plotOutput("boxplot")
+               plotOutput("histogram")
                )),
              
               tabPanel("Suche - Fahrzeug",fluidRow(
