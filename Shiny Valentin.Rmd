@@ -1,0 +1,196 @@
+---
+title: "Shiny Fabian"
+output: html_document
+date: "2024-03-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Pakete
+Benötigte Pakete aufrufen
+```{r}
+
+install.packages("tidyverse")
+install.packages("shiny")
+install.packages("leaflet")
+install.packages("leaflet.extras")
+
+library(tidyverse)
+library(shiny)
+library(leaflet)
+library(leaflet.extras)
+
+```
+
+
+
+#Hier wird das User-Interface erstellt 
+```{r}
+
+ui <- fluidPage(
+  titlePanel("Analyse - Fehlerhafte Bauteile"),
+  theme = "lightsteelblue",
+  tabsetPanel(type = "tabs",
+
+              tabPanel("Heatmap", leafletOutput(
+                "map", width = "auto", height = "1000px"
+              )),
+
+              tabPanel("Produktionsmenge", 
+                       fluidRow(
+               column(6, dateInput("from_date", "Produktionszeitraum von", value = "2012-06-01")),
+               column(6, dateInput("to_date", "Produktionszeitraum bis", value = "2014-07-31")),
+               plotOutput("histogram")
+               )),
+             
+              tabPanel("Suche - Fahrzeug",fluidRow(
+                  sidebarLayout(
+                  sidebarPanel(
+                    textInput("suche_id", "Suche Fahrzeug ID:"),
+                    actionButton("checkButton","Suche")
+                  ),
+                  
+                  mainPanel(
+                    textOutput("defect_message")
+                  )
+                )
+              )),
+              tabPanel("Vergleiche Nutzungsdauer", 
+                       fluidRow(
+                         column(6, textInput("zip_code1", "Enter Zip Code 1:")),
+                         column(6, textInput("zip_code2", "Enter Zip Code 2:"))
+                         ),
+                       actionButton("boxplot_generieren", "Generate Box Plot"),
+                       plotOutput("boxplot")
+                )
+              
+              )
+  
+  
+  
+)
+
+```
+
+
+
+#Server
+Die App mit Inhalt füllen 
+```{r}
+
+server <- function(input,output,session){
+
+#   output$map <- renderLeaflet({
+#     leaflet() %>%
+#       addProviderTiles(providers$CartoDB.DarkMatter) %>%
+#       addCircles(
+#         lat = Gemeinde_Fehler_Häufigkeit$Breitengrad,
+#         lng = Gemeinde_Fehler_Häufigkeit$Laengengrad,
+#         popup = Gemeinde_Fehler_Häufigkeit$Gemeinde,
+#         radius = Gemeinde_Fehler_Häufigkeit$Anzahl_Fehler/20
+#       ) %>%
+#       setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
+# })
+  
+  
+  output$map <- renderLeaflet({
+    leaflet() %>%
+       addTiles() %>%
+      addHeatmap(
+        data = Gemeinde_Fehler_Häufigkeit,
+        lat= ~Breitengrad,
+        lng= ~Laengengrad,
+        intensity = ~Anzahl_Fehler,
+        radius = 10,
+        max = 10,
+        blur = 20
+      ) %>% 
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)  # Zentriert die Karte auf Deutschland
+      
+    
+  })
+  
+  standpunkt <- reactive({
+    selected_location <- input$ort_dropdown
+    
+    # Filter data based on selected location
+    OEM_Standpunkt <- OEM_Produktionsmengen %>% 
+      filter(OEM_ORT == selected_location)
+    
+    return(OEM_Standpunkt)
+  })
+  
+  # Generate histogram based on filtered data
+  # Reactive expression to filter data based on selected date range
+  filtered_data <- reactive({
+    from_date <- input$from_date
+    to_date <- input$to_date
+    
+    # Filter data based on selected date range
+    filtered <- subset(Große_Datenbank2, Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date)
+    return(filtered)
+  })
+  
+  # Render histogram based on filtered data
+  output$histogram <- renderPlot({
+    # Plot histogram using ggplot2
+    ggplot(filtered_data(), aes(x = OEM_Ort)) +
+      geom_histogram(binwidth = 1, position = "dodge") +
+      labs(title = "Produktionsmengen Histogram", x = "OEM Ort", y = "Count")
+  })
+  
+  observe({
+    input$from_date
+    input$to_date
+    output$histogram <- renderPlot({
+      ggplot(filtered_data(), aes(x = OEM_Ort)) +
+        geom_histogram(binwidth = 1, position = "dodge") +
+        labs(title = "Produktionsdatum Histogram", x = "Datum", y = "Count")
+    })
+  })
+  
+  #Reactive expression to check if the entered ID is defective
+  output$defect_message <- renderText({
+    
+    #Button eingebaut bevor nach ID gesucht wird
+    req(input$checkButton)
+    input$checkButton
+    
+    id <- isolate(input$suche_id)
+    
+    if (id %in% Große_Datenbank$ID_Fahrzeug) {
+      return("Ihr Fahrzeug ist defekt.")
+    }else{
+      return("Ihr Fahrzeug ist nicht defekt!")
+    } 
+  })
+  observeEvent(input$boxplot_generieren, {
+    zip_code1 <- isolate(input$zip_code1)
+    zip_code2 <- isolate(input$zip_code2)
+    
+    # Filter data for the entered zip codes (Hier große Datenbank genommen????)
+    Große_Datenbank2$Postleitzahl <- as.character(Große_Datenbank2$Postleitzahl)
+    DB <- subset(Große_Datenbank2, Postleitzahl %in% c(zip_code1, zip_code2))
+    
+    # Create box plot
+    output$boxplot <- renderPlot({
+      ggplot(DB, aes(x = factor(Postleitzahl), y = Fahrzeug_Fehlerhaft_Fahrleistung)) +
+        geom_boxplot() +
+        labs(x = "Zip Code", y = "Nutzungsdauer", title = "Boxplots")
+    })
+  })
+  
+}
+
+
+```
+
+#Ausführung
+```{r}
+
+shinyApp(ui = ui, server = server)
+
+
+```
