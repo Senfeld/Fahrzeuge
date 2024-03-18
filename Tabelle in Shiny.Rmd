@@ -1,0 +1,56 @@
+---
+title: "Tabelle in Shiny"
+author: "Fabian"
+date: "2024-03-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(shiny)
+library(DT)
+library(tidyverse)
+
+
+# Shiny UI
+ui <- fluidPage(
+  titlePanel("Große Datenbank"),
+  DTOutput("daten_tabelle")
+)
+
+# Shiny Server
+server <- function(input, output, session) {
+  # Filtern und formatieren der Daten
+  daten <- reactive({
+    Große_Datenbank %>%
+      select(ID_Fahrzeug, 
+             Fahrzeug_Fehlerhaft_Datum, 
+             Fahrzeug_Fehlerhaft_Fahrleistung, 
+             ID_Komponente, 
+             Komponente_Fehlerhaft_Datum, 
+             Komponente_Fehlerhaft_Fahrleistung,
+             starts_with("ID_T"),
+             starts_with("Fehlerhaft_Datum_T"),
+             starts_with("Fehlerhaft_Fahrleistung_T")) %>%
+      mutate(across(contains("Datum"), as.Date),
+             across(contains("Fahrleistung"), round, digits = 0))  # Runden der Fahrleistung auf ganze Zahlen
+  })
+  
+  # Anzeigen der Daten in einer interaktiven Tabelle
+  output$daten_tabelle <- renderDT({
+    datatable(daten(), 
+              options = list(pageLength = 10),  # Anzahl der Zeilen pro Seite
+              rownames = FALSE) %>%  # Keine Zeilennummern anzeigen
+      formatStyle(names(daten()), background = "lightsteelblue", fontWeight = "bold")  # Hintergrundfarbe und Schriftstärke für alle Spalten festlegen
+  })
+}
+
+
+
+# Shiny App starten
+shinyApp(ui, server)
+```
+
