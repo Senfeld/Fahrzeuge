@@ -937,6 +937,7 @@ for(file in file_list){
 
 
 
+
 #Joining der Fahrzeuge, Komponenten und Einzelteile 
 
 ##Joining der Daten mit Bestandteilen 
@@ -1072,6 +1073,52 @@ Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>%
 Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
 
 
+```
+
+
+```{r}
+OEM_li <- c("OEM_Werke_2017-07-04_TrR.csv")
+########################################### "Tier1_Werke_2017-07-11_v1.2_TrR.csv", "Tier2_Werke_2017-07-11_v1.2_TrR.csv" werden nicht einbezogen weil in der Case Study nur nach OEM Werken gefragt wird! (Frage B der Case Study)
+
+list_of_OEM <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% OEM_li){
+    if(file.exists(full_path)){
+      data <- readLines(full_path)
+      
+      #Ersetze L„ngengrad mit Laengengrad
+      data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
+      data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_OEM[[file]] <- read.table(text = data, sep = ";", header= TRUE)
+      }
+    }
+}
+
+
+  
+cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
+OEMs <- cleandata[!is.na(cleandata$ORT), ]
+OEMs$Werk <- sub("^O", "", OEMs$Werk)
+OEMs <- OEMs %>%
+  rename(Postleitzahl = PLZ ) %>%
+  rename(OEM_Breitengrad = Breitengrad) %>%
+  rename(OEM_Laengengrad = Laengengrad) %>%
+  rename(OEM_Ort = ORT) %>%
+  mutate(Werk = as.numeric(Werk)) %>%
+  rename(Fahrzeug_Werksnummer = Werk) %>%
+  rename(OEM_Postleitzahl = Postleitzahl)
+
+Große_Datenbank2 <- left_join(Große_Datenbank2, OEMs, by="Fahrzeug_Werksnummer")
 ```
 
 

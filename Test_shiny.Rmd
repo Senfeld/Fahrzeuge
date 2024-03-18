@@ -1,0 +1,134 @@
+---
+title: "Test_shiny"
+author: "Fabian"
+date: "2024-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(leaflet)
+library(leaflet.extras)
+library(shiny)
+library(tidyverse)
+
+# # UI
+# ui <- fluidPage(
+#   titlePanel("Autokarte"),
+#   sidebarLayout(
+#     sidebarPanel(
+#       textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
+#       actionButton("search_button", "Suche starten"),
+#       verbatimTextOutput("vehicle_status")  # Benachrichtigungsfeld
+#     ),
+#     mainPanel(
+#       leafletOutput("map")
+#     )
+#   )
+# )
+
+ui <- fluidPage(
+  titlePanel("Autokarte"),
+  tags$style(HTML("
+    #search_panel {
+      position: absolute;
+      top: 150px;
+      left: 20px;
+      z-index: 1000; /* Legt die Stapelreihenfolge über die Karte fest */
+      background-color: lightsteelblue; /* Hintergrundfarbe des Suchfelds */
+      padding: 10px; /* Abstand um das Suchfeld */
+      border-radius: 5px; /* Abgerundete Ecken für das Suchfeld */
+    }
+  ")),
+  div(id = "search_panel",
+      textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
+      actionButton("search_button", "Suche starten"),
+      verbatimTextOutput("vehicle_status")  # Benachrichtigungsfeld
+  ),
+  leafletOutput("map", width = "100%", height = "100vh")
+)
+
+# Server
+server <- function(input, output, session) {
+  
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      addHeatmap(
+       data = Gemeinde_Fehler_Häufigkeit,
+       lat = ~Breitengrad,
+       lng = ~Laengengrad,
+       intensity = ~Anzahl_Fehler,
+       radius = 10,
+       max = 10,
+       blur = 20) %>% 
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)
+  })
+  
+  observeEvent(input$search_button, {
+    req(input$vehicle_id)  # Stellen Sie sicher, dass eine Fahrzeug-ID eingegeben wurde
+    
+    if(input$vehicle_id %in% Große_Datenbank2$ID_Fahrzeug) {
+      # Extrahieren Sie die Informationen zum Fahrzeug
+      vehicle_info <- Große_Datenbank2[Große_Datenbank2$ID_Fahrzeug == input$vehicle_id, ]
+      fehlerhaft <- paste("Ihr Fahrzeug mit der ID ", input$vehicle_id," ist fehlerhaft!")
+      # Bestimmen Sie, ob das Fahrzeug, die Komponente oder eines der Einzelteile fehlerhaft ist
+      if (!is.na(vehicle_info$Fahrzeug_Fehlerhaft_Datum)) {
+        fehler_text <- "Das Fahrzeug ist fehlerhaft."
+        fehler_datum <- vehicle_info$Fahrzeug_Fehlerhaft_Datum
+        fehler_fahrleistung <- vehicle_info$Fahrzeug_Fehlerhaft_Fahrleistung
+      } else if (!is.na(vehicle_info$Komponente_Fehlerhaft_Datum)) {
+        fehler_text <- "Eine Komponente des Fahrzeugs ist fehlerhaft."
+        fehler_datum <- vehicle_info$Komponente_Fehlerhaft_Datum
+        fehler_fahrleistung <- vehicle_info$Komponente_Fehlerhaft_Fahrleistung
+      } else {
+        # Überprüfen Sie jedes Einzelteil
+        fehler_text <- NULL
+        for (i in 30:40) {
+          column_name <- paste("Fehlerhaft_Datum_T", i, sep = "")
+          column_name_leistung <- paste("Fehlerhaft_Fahrleistung_T", i, sep = "")
+          if (!is.na(vehicle_info[[column_name]])) {
+            fehler_text <- paste("Ein Einzelteil (T", i, ") des Fahrzeugs ist fehlerhaft.", sep = "")
+            fehler_datum <- vehicle_info[[column_name]]  
+            fehler_fahrleistung <- round(vehicle_info[[column_name_leistung]], digits = 2)
+            break
+          }
+        }
+      }
+      
+      # Erstelle Popup-Nachricht mit den Fahrzeuginformationen und Fehlerstatus
+      popup_text <- paste(
+        "Herstellernummer - Fahrzeug:", vehicle_info$Fahrzeug_Herstellernummer, "<br>",
+        "Produktionsdatum - Fahrzeug:", vehicle_info$Fahrzeug_Produktionsdatum, "<br>",
+        "Fehlerhaftes Teil:",fehler_text,"<br>",
+        "Datum - Fehler:",fehler_datum,"<br>",
+        "Fahrlesitung - Fehler (km):",fehler_fahrleistung
+        
+      )
+      
+      # Fügen Sie den CircleMarker zur Karte hinzu
+      leafletProxy("map", session) %>%
+        clearMarkers() %>%
+        addCircleMarkers(lng = vehicle_info$Laengengrad, lat = vehicle_info$Breitengrad, radius = 10, 
+                         popup = popup_text)
+      
+      # Geben Sie den Fehlerstatus aus
+      output$vehicle_status <- renderText({
+        paste("Fehlerstatus: ", fehlerhaft)
+      })
+    } else {
+      output$vehicle_status <- renderText({
+        "Ihr Fahrzeug ist nicht fehlerhaft."
+      })
+    }
+  })
+}
+
+shinyApp(ui, server)
+
+```
+
+
