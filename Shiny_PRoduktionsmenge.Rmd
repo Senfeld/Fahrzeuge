@@ -1,0 +1,106 @@
+---
+title: "Shiny Aufgabe b"
+author: "Fabian"
+date: "2024-03-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(leaflet)
+library(leaflet.extras)
+library(shiny)
+library(tidyverse)
+
+
+
+
+ui <- fluidPage(
+  titlePanel("Produktionsmenge"),
+  sidebarLayout(
+    sidebarPanel(
+      tabsetPanel(
+        tabPanel("Filter",
+                 dateInput("from_date", "Produktionszeitraum von"),
+                 dateInput("to_date", "Produktionszeitraum bis" ),
+                 selectInput("ebene_dropdown", "Ebene auswählen:", choices = c("Komponente", "Einzelteile"))
+        )
+      )
+    ),
+    mainPanel(
+      tabsetPanel(type = "tabs",
+                  tabPanel("Produktionsmenge", 
+                           plotOutput("histogram")
+                  )
+      )
+    )
+  )
+)
+
+  
+
+# # Server
+server <- function(input, output, session) {
+  
+  standpunkt <- reactive({
+    selected_location <- input$ort_dropdown
+    
+    # Filter data based on selected location
+    OEM_Standpunkt <- OEM_Produktionsmengen %>% 
+      filter(OEM_ORT == selected_location)
+    
+    return(OEM_Standpunkt)
+  })
+  
+  # Generate histogram based on filtered data
+  filtered_data <- reactive({
+    from_date <- input$from_date
+    to_date <- input$to_date
+    
+    # Filter data based on selected date range
+    filtered <- Große_Datenbank2 %>%
+      filter(Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date) %>%
+      mutate(Komponente = substr(ID_Komponente, 1, 2))
+    
+    return(filtered)
+  })
+  
+  output$histogram <- renderPlot({
+    if (input$ebene_dropdown == "Komponente") {
+      # Plot histogram for Komponente
+      ggplot(filtered_data(), aes(x = OEM_Ort, fill = Komponente)) +
+        geom_bar(binwidth = 1, position = "stack") +
+        labs(title = "Produktionsmengen", x = "OEM Werk", y = "Komponentenmengen")
+    } else if (input$ebene_dropdown == "Einzelteile") {
+      # Pivot data for Einzelteile
+      
+      oem_parts_df <- filtered_data() %>%
+        select(OEM_Ort, starts_with("ID_T"))
+      
+      oem_parts_df$Anzahl_Einzelteile <- rowSums(!is.na(oem_parts_df[,paste0("ID_T",30:40)]))
+      
+      oem_parts_sum <- aggregate(Anzahl_Einzelteile ~ OEM_Ort, data = oem_parts_df, FUN = sum)
+
+      # Plot Balekndiagramm for Einzelteile
+      ggplot(oem_einzelteile, aes(x = OEM_Ort, y = Anzahl_Einzelteile)) +
+       geom_bar(stat = "identity", fill = "lightsteelblue") +
+       labs(title = "Gesamtanzahl der verbauten Einzelteile nach OEM-Ort",
+            x = "OEM-Ort",
+            y = "Gesamtanzahl der Einzelteile")
+      
+     }
+   })
+    }
+    
+
+
+
+
+
+shinyApp(ui, server)
+
+```
+
