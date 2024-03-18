@@ -34,7 +34,7 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(type = "tabs",
                   tabPanel("Produktionsmenge", 
-                           plotOutput("histogram")
+                           plotlyOutput("histogram")
                   )
       )
     )

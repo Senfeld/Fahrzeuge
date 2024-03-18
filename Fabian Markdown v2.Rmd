@@ -365,6 +365,46 @@ cleaning_other <- function(data){
     }
   
 }
+```
+
+#Säuberung - gleiche Funktion
+```{r}
+cleaner <- function(data) {
+    data$X <- NULL
+    data$X.1 <- NULL
+    data$X.2 <- NULL
+    data$X.3 <- NULL
+    data$X.4 <- NULL
+    data$X.5 <- NULL
+    data$X.6 <- NULL
+    data$X.7 <- NULL
+    data$X.8 <- NULL
+    data$X.9 <- NULL
+    data$X.10 <- NULL
+    data$X.11 <- NULL
+    data$X.12 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
 
 ```
 
@@ -1031,43 +1071,6 @@ Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerha
 
 ```{r}
 
-#Kann man auf andere Funktion übertragen
-cleaner <- function(data) {
-    data$X <- NULL
-    data$X.1 <- NULL
-    data$X.2 <- NULL
-    data$X.3 <- NULL
-    data$X.4 <- NULL
-    data$X.5 <- NULL
-    data$X.6 <- NULL
-    data$X.7 <- NULL
-    data$X.8 <- NULL
-    data$X.9 <- NULL
-    data$X.10 <- NULL
-    data$X.11 <- NULL
-    data$X.12 <- NULL
-    data$...1 <- NULL
-    
-    if (ncol(data) == 8) {
-      column_vector <- colnames(data)
-      column_vector <- na.omit(column_vector)
-      return(data)
-    }
-    else if (ncol(data) == 14) {
-      original_columns <- colnames(data)[1:7]
-      # Remove the ".x" suffix from each column name
-      original_columns <- sub("\\.x$", "", original_columns)
-      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
-      colnames(concatenated_data) <- original_columns
-      for (col in original_columns) {
-        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
-      }
-      return(concatenated_data)
-    }
-    else {
-      return(data)
-    }
-}
 
   
 cleandata <- cleaner(list_of_geo$"Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv")

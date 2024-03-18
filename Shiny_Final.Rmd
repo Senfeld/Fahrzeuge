@@ -1,0 +1,292 @@
+---
+title: "Shiny-Applikation final"
+output: html_document
+date: "2024-03-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(DT)
+library(leaflet)
+library(leaflet.extras)
+library(plotly)
+library(tidyverse)
+library(shiny)
+library(shinythemes)
+
+# UI
+ui <- fluidPage(
+  titlePanel("Autokarte und Datenanalyse"),
+  tabsetPanel(
+    tabPanel("Suche",
+             fluidPage(
+               titlePanel("Autokarte"),
+               tags$style(HTML("
+                                #search_panel {
+                                  position: absolute;
+                                  top: 250px;
+                                  left: 40px;
+                                  z-index: 1000; /* Legt die Stapelreihenfolge über die Karte fest */
+                                  background-color: lightsteelblue; /* Hintergrundfarbe des Suchfelds */
+                                  padding: 10px; /* Abstand um das Suchfeld */
+                                  border-radius: 5px; /* Abgerundete Ecken für das Suchfeld */
+                                }
+                              ")),
+               div(id = "search_panel",
+                   textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
+                   actionButton("search_button", "Suche starten"),
+                   verbatimTextOutput("vehicle_status")  # Benachrichtigungsfeld
+               ),
+               leafletOutput("map", width = "100%", height = "calc(100vh - 80px)")
+             )
+    ),
+    tabPanel("Produktionsmenge",
+             fluidPage(
+               titlePanel("Produktionsmenge"),
+               sidebarLayout(
+                 sidebarPanel(
+                   tabsetPanel(
+                     tabPanel("Filter",
+                              dateInput("from_date", "Produktionszeitraum von"),
+                              dateInput("to_date", "Produktionszeitraum bis"),
+                              selectInput("ebene_dropdown", "Ebene auswählen:", choices = c("Komponente", "Einzelteile"))
+                     )
+                   )
+                 ),
+                 mainPanel(
+                   tabsetPanel(type = "tabs",
+                               tabPanel("Produktionsmenge",
+                                        plotlyOutput("histogram")
+                               )
+                   )
+                 )
+               )
+             )
+    ),
+    tabPanel("Daten",
+             fluidPage(
+               titlePanel("Große Datenbank"),
+               DTOutput("daten_tabelle")
+             )
+    ),
+    tabPanel("Nutzungsdauer - Vergleich",
+             fluidPage(
+               titlePanel("Nutzungsdauer - Vergleich"),
+  theme = shinytheme("cerulean"),
+  tabPanel("Vergleich",
+           fluidPage(
+             tags$style(HTML('
+                             /* Ändern der Hintergrundfarbe des Textinputs */
+                             .shiny-input-container input[type="text"] {
+                               background-color: lightsteelblue;
+                               border: none;
+                               border-radius: 5px;
+                               padding: 10px;
+                               width: 100%;
+                             }
+
+                             /* Ändern der Schriftfarbe des Textinputs */
+                             .shiny-input-container input[type="text"]::placeholder {
+                               color: gray;
+                             }
+
+                             /* Ändern des Aussehens des Buttons */
+                             .btn-primary {
+                               background-color: lightsteelblue;
+                               border-color: lightsteelblue;
+                               border-radius: 5px;
+                               padding: 10px 20px;
+                               margin-top: 10px;
+                             }
+
+                             /* Ändern des Aussehens des Buttons bei Hover */
+                             .btn-primary:hover {
+                               background-color: #99c2ff; /* Helleres Blau für Hover-Effekt */
+                               border-color: #99c2ff;
+                             }
+                           '))
+             ,
+             column(6, textInput("zip_code1", "Enter Zip Code 1:")),
+             column(6, textInput("zip_code2", "Enter Zip Code 2:")),
+             actionButton("boxplot_generieren", "Generate Box Plot")
+           )
+             ),
+             plotOutput("boxplot")
+             )
+  )
+)
+)
+
+# Server
+server <- function(input, output, session) {
+  
+  
+  # Karte rendern
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      addHeatmap(
+        data = Gemeinde_Fehler_Häufigkeit,
+        lat = ~Breitengrad,
+        lng = ~Laengengrad,
+        intensity = ~Anzahl_Fehler,
+        radius = 10,
+        max = 10,
+        blur = 20) %>% 
+      setView(lng = 10.4515, lat = 51.1657, zoom = 6)
+  })
+  
+  # Produktionsmenge Histogramm
+   # Generate histogram based on filtered data
+  filtered_data <- reactive({
+    from_date <- input$from_date
+    to_date <- input$to_date
+    
+    # Filter data based on selected date range
+    filtered <- Große_Datenbank %>%
+      filter(Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date) %>%
+      mutate(Komponente = substr(ID_Komponente, 1, 2))
+    
+    return(filtered)
+  })
+  
+  output$histogram <- renderPlotly({
+    if (input$ebene_dropdown == "Komponente") {
+      # Plot histogram for Komponente
+      ggplotly(
+      ggplot(filtered_data(), aes(x = OEM_Ort, fill = Komponente)) +
+        geom_bar(position = "stack") +
+        labs(title = "Produktionsmengen", x = "OEM Werk", y = "Komponentenmengen")
+      )
+    } else if (input$ebene_dropdown == "Einzelteile") {
+      # Pivot data for Einzelteile
+      
+      oem_parts_df <- filtered_data() %>%
+        select(OEM_Ort, starts_with("ID_T"))
+      
+      oem_parts_df$Anzahl_Einzelteile <- rowSums(!is.na(oem_parts_df[,paste0("ID_T",30:40)]))
+      
+      oem_parts_sum <- aggregate(Anzahl_Einzelteile ~ OEM_Ort, data = oem_parts_df, FUN = sum)
+
+      # Plot Balekndiagramm for Einzelteile
+      ggplotly(
+      ggplot(oem_einzelteile, aes(x = OEM_Ort, y = Anzahl_Einzelteile)) +
+       geom_bar(stat = "identity", fill = "lightsteelblue") +
+       labs(title = "Gesamtanzahl der verbauten Einzelteile nach OEM-Ort",
+            x = "OEM-Ort",
+            y = "Gesamtanzahl der Einzelteile")
+      )
+      
+     }
+   })
+  
+  # Tabelle mit den Daten
+  ## Filtern und formatieren der Daten
+  daten <- reactive({
+    Große_Datenbank %>%
+      select(ID_Fahrzeug, 
+             Fahrzeug_Fehlerhaft_Datum, 
+             Fahrzeug_Fehlerhaft_Fahrleistung, 
+             ID_Komponente, 
+             Komponente_Fehlerhaft_Datum, 
+             Komponente_Fehlerhaft_Fahrleistung,
+             starts_with("ID_T"),
+             starts_with("Fehlerhaft_Datum_T"),
+             starts_with("Fehlerhaft_Fahrleistung_T")) %>%
+      mutate(across(contains("Datum"), as.Date),
+             across(contains("Fahrleistung"), round, digits = 0))  # Runden der Fahrleistung auf ganze Zahlen
+  })
+  
+  # Anzeigen der Daten in einer interaktiven Tabelle
+  output$daten_tabelle <- renderDT({
+    datatable(daten(), 
+              options = list(pageLength = 10),  # Anzahl der Zeilen pro Seite
+              rownames = FALSE) %>%  # Keine Zeilennummern anzeigen
+      formatStyle(names(daten()), background = "lightsteelblue", fontWeight = "bold")  # Hintergrundfarbe und Schriftstärke für alle Spalten festlegen
+  })
+  
+  # Fahrzeug-Suche
+  observeEvent(input$search_button, {
+        req(input$vehicle_id)  # Stellen Sie sicher, dass eine Fahrzeug-ID eingegeben wurde
+    
+    if(input$vehicle_id %in% Große_Datenbank2$ID_Fahrzeug) {
+      # Extrahieren Sie die Informationen zum Fahrzeug
+      vehicle_info <- Große_Datenbank2[Große_Datenbank2$ID_Fahrzeug == input$vehicle_id, ]
+      fehlerhaft <- paste("Ihr Fahrzeug mit der ID ", input$vehicle_id," ist fehlerhaft!")
+      # Bestimmen Sie, ob das Fahrzeug, die Komponente oder eines der Einzelteile fehlerhaft ist
+      if (!is.na(vehicle_info$Fahrzeug_Fehlerhaft_Datum)) {
+        fehler_text <- "Das Fahrzeug ist fehlerhaft."
+        fehler_datum <- vehicle_info$Fahrzeug_Fehlerhaft_Datum
+        fehler_fahrleistung <- vehicle_info$Fahrzeug_Fehlerhaft_Fahrleistung
+      } else if (!is.na(vehicle_info$Komponente_Fehlerhaft_Datum)) {
+        fehler_text <- "Eine Komponente des Fahrzeugs ist fehlerhaft."
+        fehler_datum <- vehicle_info$Komponente_Fehlerhaft_Datum
+        fehler_fahrleistung <- vehicle_info$Komponente_Fehlerhaft_Fahrleistung
+      } else {
+        # Überprüfen Sie jedes Einzelteil
+        fehler_text <- NULL
+        for (i in 30:40) {
+          column_name <- paste("Fehlerhaft_Datum_T", i, sep = "")
+          column_name_leistung <- paste("Fehlerhaft_Fahrleistung_T", i, sep = "")
+          if (!is.na(vehicle_info[[column_name]])) {
+            fehler_text <- paste("Ein Einzelteil (T", i, ") des Fahrzeugs ist fehlerhaft.", sep = "")
+            fehler_datum <- vehicle_info[[column_name]]  
+            fehler_fahrleistung <- round(vehicle_info[[column_name_leistung]], digits = 2)
+            break
+          }
+        }
+      }
+      
+      # Erstelle Popup-Nachricht mit den Fahrzeuginformationen und Fehlerstatus
+      popup_text <- paste(
+        "Herstellernummer - Fahrzeug:", vehicle_info$Fahrzeug_Herstellernummer, "<br>",
+        "Produktionsdatum - Fahrzeug:", vehicle_info$Fahrzeug_Produktionsdatum, "<br>",
+        "Fehlerhaftes Teil:",fehler_text,"<br>",
+        "Datum - Fehler:",fehler_datum,"<br>",
+        "Fahrlesitung - Fehler (km):",fehler_fahrleistung
+        
+      )
+      
+      # Fügen Sie den CircleMarker zur Karte hinzu
+      leafletProxy("map", session) %>%
+        clearMarkers() %>%
+        addCircleMarkers(lng = vehicle_info$Laengengrad, lat = vehicle_info$Breitengrad, radius = 10, 
+                         popup = popup_text)
+      
+      # Geben Sie den Fehlerstatus aus
+      output$vehicle_status <- renderText({
+        paste("Fehlerstatus: ", fehlerhaft)
+      })
+    } else {
+      output$vehicle_status <- renderText({
+        "Ihr Fahrzeug ist nicht fehlerhaft."
+      })
+    }
+  })
+  
+  #Boxplot-Nutzungsdauer
+   observeEvent(input$boxplot_generieren, {
+    zip_code1 <- isolate(input$zip_code1)
+    zip_code2 <- isolate(input$zip_code2)
+    
+    # Filter data for the entered zip codes (Hier große Datenbank genommen????)
+    Große_Datenbank2$Postleitzahl <- as.character(Große_Datenbank2$Postleitzahl)
+    DB <- subset(Große_Datenbank2, Postleitzahl %in% c(zip_code1, zip_code2))
+    
+    # Create box plot
+    output$boxplot <- renderPlot({
+      ggplot(DB, aes(x = factor(Postleitzahl), y = Fahrzeug_Fehlerhaft_Fahrleistung)) +
+        geom_boxplot() +
+        labs(x = "Zip Code", y = "Nutzungsdauer", title = "Boxplots")
+    })
+  })
+}
+
+# Shiny App starten
+shinyApp(ui, server)
+
+```
+

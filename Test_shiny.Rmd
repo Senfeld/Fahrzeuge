@@ -15,20 +15,7 @@ library(leaflet.extras)
 library(shiny)
 library(tidyverse)
 
-# # UI
-# ui <- fluidPage(
-#   titlePanel("Autokarte"),
-#   sidebarLayout(
-#     sidebarPanel(
-#       textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
-#       actionButton("search_button", "Suche starten"),
-#       verbatimTextOutput("vehicle_status")  # Benachrichtigungsfeld
-#     ),
-#     mainPanel(
-#       leafletOutput("map")
-#     )
-#   )
-# )
+#UI
 
 ui <- fluidPage(
   titlePanel("Autokarte"),
