@@ -40,8 +40,9 @@ ui <- fluidPage(
 
               tabPanel("Produktionsmenge", 
                        fluidRow(
-               column(6, dateInput("from_date", "Produktionszeitraum von", value = "2012-06-01")),
-               column(6, dateInput("to_date", "Produktionszeitraum bis", value = "2014-07-31")),
+               column(4, dateInput("from_date", "Produktionszeitraum von", value = "2012-06-01")),
+               column(4, dateInput("to_date", "Produktionszeitraum bis", value = "2014-07-31")),
+               column(4, selectInput("ebene_dropdown", "Ebene auswählen:", choices = c("Komponente", "Einzelteile"))),
                plotOutput("histogram")
                )),
              
@@ -123,33 +124,50 @@ server <- function(input,output,session){
   })
   
   # Generate histogram based on filtered data
-  # Reactive expression to filter data based on selected date range
+  # Reactive expression to filter data based on selected date ange
   filtered_data <- reactive({
     from_date <- input$from_date
     to_date <- input$to_date
     
     # Filter data based on selected date range
     filtered <- subset(Große_Datenbank2, Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date)
+    filtered <- filtered %>%
+      mutate(Komponente = substr(ID_Komponente, 1, 2))
     return(filtered)
   })
   
-  # Render histogram based on filtered data
   output$histogram <- renderPlot({
+    if (input$ebene_dropdown == "Komponente") {
+  # Render histogram based on filtered data
     # Plot histogram using ggplot2
-    ggplot(filtered_data(), aes(x = OEM_Ort)) +
-      geom_histogram(binwidth = 1, position = "dodge") +
-      labs(title = "Produktionsmengen Histogram", x = "OEM Ort", y = "Count")
-  })
-  
-  observe({
-    input$from_date
-    input$to_date
-    output$histogram <- renderPlot({
-      ggplot(filtered_data(), aes(x = OEM_Ort)) +
+      ggplot(filtered_data(), aes(x = OEM_Ort, fill = Komponente)) +
         geom_histogram(binwidth = 1, position = "dodge") +
-        labs(title = "Produktionsdatum Histogram", x = "Datum", y = "Count")
+        labs(title = "Produktionsmengen Histogram", x = "OEM Werk", y = "Komponentenmengen")
+    }
+    else if (input$ebene_dropdown == "Einzelteile") {
+      df_long <- pivot_longer(filtered_data(), cols = starts_with("ID_T"), names_to =   "ID_Einzelteile", values_to = "ID")
+
+# Pivot columns Fehlerhaft_T30 to Fehlerhaft_T38 into Fehlerhaft
+      df_long <- pivot_longer(df_long, cols = starts_with("Fehlerhaft_T"), names_to = "Fehlerhaft", values_to = "Fehlerhaft")
+
+# Pivot column OEM_Ort
+      df_long <- pivot_longer(df_long, cols = c(OEM_Ort), names_to = "OEM_Ort", values_to = "Value")
+      # Plot histogram for Einzelteile
+      ggplot(df_long, aes(x = OEM_Ort, fill = ID_Einzeilteile)) +
+        geom_bar(position = "dodge") +
+        labs(title = "Produktionsmengen Histogram", x = "OEM Werk", y = "Einzeilteilmengen")
+    }
     })
-  })
+  
+#  observe({
+#    input$from_date
+#    input$to_date
+#    output$histogram <- renderPlot({
+#      ggplot(filtered_data(), aes(x = OEM_Ort)) +
+#        geom_histogram(binwidth = 1, position = "dodge") +
+#        labs(title = "Produktionsdatum Histogram", x = "Datum", y = "Count")
+#    })
+#  })
   
   #Reactive expression to check if the entered ID is defective
   output$defect_message <- renderText({
