@@ -114,7 +114,7 @@ ui <- fluidPage(
              actionButton("boxplot_generieren", "Generate Box Plot")
            )
              ),
-             plotOutput("boxplot")
+             plotlyOutput("boxplot")
              )
   )
 )
@@ -267,22 +267,46 @@ server <- function(input, output, session) {
     }
   })
   
-  #Boxplot-Nutzungsdauer
-   observeEvent(input$boxplot_generieren, {
-    zip_code1 <- isolate(input$zip_code1)
-    zip_code2 <- isolate(input$zip_code2)
+  
+  observeEvent(input$boxplot_generieren, {
+  zip_code1 <- isolate(input$zip_code1)
+  zip_code2 <- isolate(input$zip_code2)
+  
+  # Filter data for the entered zip codes
+  Große_Datenbank2$Postleitzahl <- as.character(Große_Datenbank2$Postleitzahl)
+  
+  PLZ1 <- Große_Datenbank2 %>% 
+    filter(Postleitzahl == zip_code1 & Komponente_Fehlerhaft_Fahrleistung != 0)
+  
+  PLZ2 <- Große_Datenbank2 %>% 
+    filter(Postleitzahl == zip_code2 & Komponente_Fehlerhaft_Fahrleistung != 0)
+  
+  # Create box plot with plotly
+  output$boxplot <- renderPlotly({
+    # Plot für PLZ1
+    p1 <- plot_ly(PLZ1, x = ~Postleitzahl, y = ~Komponente_Fehlerhaft_Fahrleistung, 
+                  type = 'box', 
+                  name = paste("Boxplot for", zip_code1), 
+                  marker = list(color = 'rgb(12, 133, 200)')) %>%
+      layout(title = paste("Boxplot for", zip_code1),
+             xaxis = list(title = "Zip Code"),
+             yaxis = list(title = "Nutzungsdauer"))
     
-    # Filter data for the entered zip codes (Hier große Datenbank genommen????)
-    Große_Datenbank2$Postleitzahl <- as.character(Große_Datenbank2$Postleitzahl)
-    DB <- subset(Große_Datenbank2, Postleitzahl %in% c(zip_code1, zip_code2))
+    # Plot für PLZ2
+    p2 <- plot_ly(PLZ2, x = ~Postleitzahl, y = ~Komponente_Fehlerhaft_Fahrleistung, 
+                  type = 'box', 
+                  name = paste("Boxplot for", zip_code2), 
+                  marker = list(color = 'rgb(245, 74, 32)')) %>%
+      layout(title = paste("Boxplot for", zip_code2),
+             xaxis = list(title = "Zip Code"),
+             yaxis = list(title = "Nutzungsdauer"))
     
-    # Create box plot
-    output$boxplot <- renderPlot({
-      ggplot(DB, aes(x = factor(Postleitzahl), y = Fahrzeug_Fehlerhaft_Fahrleistung)) +
-        geom_boxplot() +
-        labs(x = "Zip Code", y = "Nutzungsdauer", title = "Boxplots")
-    })
+    # Kombiniere beide Plots
+    subplot(p1, p2)
   })
+})
+
+
 }
 
 # Shiny App starten
