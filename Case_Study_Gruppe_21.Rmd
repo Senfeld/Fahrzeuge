@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #Laden von nötigen Paketen 
 
 Zunächst werden die nötigen Packages installiert und geladen, falls nicht bereits vorhanden:
+
 ```{r, echo=FALSE}
 suppressWarnings({
 
@@ -65,9 +66,8 @@ Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keine
 
 ### T34 Funktion
 Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
-Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
-und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
-Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen. Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+
 ```{r}
 reading_T34 <- function(data){
   
@@ -96,3 +96,205 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
 }
 ```
 
+###T35 Funktion
+Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen. Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+```{r}
+reading_T35 <- function(data){
+  
+  gesamter_text <- paste(data, collapse = " ")
+
+gesamter_text <- gsub("(?<!^)(\\\"\\d+-\\d+-\\d+-\\d+\"\\\\)", "\n\\1", gesamter_text, perl = TRUE)
+
+
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\"\\\\", "", x)
+ })
+
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ 
+ T35 <- read_csv(txt_to_csv, col_names = TRUE)
+ 
+ return(T35)
+}
+```
+
+#Einlesen der untersuchten Dateien
+
+CSV- und TXT-Dateien werden gesondert eingelesen, da sich letztere als komplizierter erwiesen haben. 
+
+##Einlesen der CSV-Dateien und speichern in der Liste "list_of_parts"
+Der folgende Code durchläuft alle Dateien in unserem Datenordner. Wenn eine Datei geprüft wird, die nicht Teil unserer Suchgruppe ist, wird eine entsprechende Meldung erzeugt. Es unterscheidet auch zwischen Separator ";" und ",". 
+
+```{r}
+
+#Erstellung Vektor mit Dokumentennamen 
+file_list_csv <- list.files(folder_path,pattern="*.csv")
+
+for(file in file_list_csv){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% our_csv){
+    
+  
+    if(file.exists(full_path)){
+      if(file %in% semiko_sep){
+        
+        #read_csv2 zum einlesen mit Semikolon-Trennzeichen 
+        list_of_parts[[file]] <- read_csv2(full_path)
+        
+      }else{
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_parts[[file]] <- read_csv(full_path) 
+        }
+    }
+    }else{ 
+    
+      print(paste(file,"gehört nicht zu den untersuchten .csv Daten"))
+      next
+    }
+  }
+  
+```
+
+##Einlesen der TXT-Dateien
+
+Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen korrigiert werden mussten. Bei Einzeilteil_T31.txt musste man zuerst die Separatoren zu einem lesbaren Format wechseln. Dafür wurde die Funktion str_replace_all() genutzt. T31 hatte auch spezielle Charaktere () die speziell behandelt wurden mit einem erneuten str_replace_all().
+
+```{r warning=FALSE}
+
+#Erstellung Vektor mit Dokumentennamen 
+file_list_txt <- list.files(folder_path,pattern="*.txt")
+
+for(file in file_list_txt){
+  
+   full_path <- paste0(folder_path, "/", file)
+   
+    if(file == "Einzelteil_T31.txt"){
+      data <- readLines(full_path)
+      
+      #Ersetze Seperatoren und füge Zeilenumbruch ein 
+      data <- str_replace_all(data, pattern = "  ", replacement = ";")
+      data <- str_replace_all(data, pattern = "", replacement = "\n")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_parts[[file]] <- read.table(text = data, sep = ";", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names_v3)
+      
+    }
+    else if(file == "Einzelteil_T36.txt"){
+      data <- readLines(full_path)
+      data <- str_replace_all(data, pattern = "  ", replacement = ";")
+      data <- str_replace_all(data, pattern = " ", replacement = "\n")
+      
+      list_of_parts[[file]] <- read.table(text = data, sep = ";", header = FALSE, skip = 1, stringsAsFactors = FALSE,col.names = col_names_v2)
+    }
+    else if(file == "Einzelteil_T34.txt"){
+      data <- readLines(full_path)
+      
+      list_of_parts[[file]] <- reading_T34(data)
+      
+    }
+    else if(file == "Einzelteil_T35.txt"){
+      data <- readLines(full_path)
+
+      list_of_parts[[file]] <- reading_T35(data)
+      
+    }
+    else if(file == "Einzelteil_T39.txt"){
+      data <- readLines(full_path)
+      data <- str_replace_all(data, pattern = fixed("\\"), replacement = ";")
+      data <- str_replace_all(data, pattern = " ", replacement = "\n")
+      #T39 setzt statt \n erstmal \a aus unerklärlichen Gründen, weshalb \a nochmal ersetzt werden muss 
+      data <- str_replace_all(data, pattern = "\a", replacement = "\n")
+      
+      list_of_parts[[file]] <- read.table(text = data, sep = ";", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names_v1)
+    
+   }else{ 
+    
+      print(paste(file,"gehört nicht zu den untersuchten .txt Daten"))
+      next
+    }
+  
+}
+
+#Sortieren der Liste nach Namen 
+list_of_parts <- list_of_parts[order(names(list_of_parts))]
+
+```
+
+# Aufbereitung der Dateien 
+
+Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
+
+## Funktionen für die Säuberung 
+
+```{r}
+
+cleaner_einzelteile <- function(Einzelteil){
+  
+  #Speichern des Inhalts 
+  data <- list_of_parts[[Einzelteil]]
+  
+  if(Einzelteil %in% clean_T34_T35){
+    
+    clean_data <- cleaning_T34_T35(Einzelteil, data)
+     
+     clean_data <- adjust_classes(clean_data)
+    
+    return(clean_data)
+  }
+  
+  else{
+
+    #Löschen der ersten beiden Spalten
+    data <- data[,-c(1,2)]
+    
+    #Reparieren der Spaltennamen 
+    clean_data <- cleaning_other(data)
+    
+    if(Einzelteil %in% Gruppe1){
+    
+     #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
+      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      clean_data <- clean_data[!is.na(clean_data[1]),]
+     
+     clean_data <- clean_data %>%
+       rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_data[1]), Produktionsdatum, everything())
+     
+     clean_data$Produktionsdatum <- as.Date(clean_data$Produktionsdatum, origin="1970-01-01")
+     clean_data$origin <- NULL 
+     
+     clean_data <- adjust_classes(clean_data)
+      
+      return(clean_data)
+      
+    }else if(Einzelteil %in% Gruppe2){
+      
+      #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben
+      clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
+      clean_data <- clean_data[!is.na(clean_data[1]),]
+      clean_data <- adjust_classes(clean_data)
+      
+      return(clean_data)
+      
+    }
+  }
+}
+
+
+```
