@@ -236,7 +236,7 @@ list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 ```
 
-# Aufbereitung der Dateien 
+# Aufbereitung und einlesung der Dateien 
 
 Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
 
@@ -420,6 +420,8 @@ cleaning_T34_T35 <- function(Einzelteil,data){
 
 ### Säuberungsfunktion der Komponentenebene
 
+Die Säuberung der Komponentenebene erwies sich als einfacher. Es wurde entschieden eine Funktion, cleaner(), nur für Komponenten zu schreiben. 
+
 ```{r}
 cleaner <- function(data) {
     data$X <- NULL
@@ -456,6 +458,66 @@ cleaner <- function(data) {
     else {
       return(data)
     }
+}
+
+```
+
+### Funktion zum anpassen der Klassen der Spalten 
+Diese Funktion passt die Klassen der Spalten im Dataframe an. Sie konvertiert bestimmte Spalten in das Datumsformat, bestimmte Spalten in das Zeichenformat und bestimmte Spalten in das numerische Format. Dies ist notwendig um später die verschiedenen Dataframes zu joinen.
+
+```{r}
+
+adjust_classes <- function(df) {
+  # Anpassung der Klassen 
+  df <- df %>%
+    mutate(across(c(Produktionsdatum, Fehlerhaft_Datum), as.Date),
+           across(names(df[1]), as.character),
+           across(c(Herstellernummer, Werksnummer, Fehlerhaft,Fehlerhaft_Fahrleistung), as.numeric))
+  return(df)
+}
+
+```
+
+## Ausführung der Säuberung 
+
+
+```{r}
+
+list_of_parts_clean <- list()
+n <- 30 
+
+#Gruppierung nach benötigter Säuberung 
+clean_T34_T35 <- c("Einzelteil_T34.txt", "Einzelteil_T35.txt")
+
+#Gruppe1 sind die Dateien mit 10 == Spalten 
+Gruppe1 <- c("Einzelteil_T31.txt","Einzelteil_T33.csv","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T40.csv")
+
+#Gruppe1 sind die Dateien mit 16 <= Spalten
+Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Einzelteil_T39.txt")
+
+cols <- c("Produktionsdatum","Herstellernummer", "Werksnummer","Fehlerhaft","Fehlerhaft_Datum","Fehlerhaft_Fahrleistung")
+
+  list_of_parts_clean <- setNames(
+    lapply(names(list_of_parts), function(Einzelteil) {
+        cleaner_einzelteile(Einzelteil)
+    }),
+    names(list_of_parts)
+  )
+  
+  list_of_parts_clean <- lapply(list_of_parts_clean, function(df) {
+  filter(df, Herstellernummer == 217)
+})
+  
+  list_of_parts_clean <- Filter(function(x) nrow(x) > 0, list_of_parts_clean)
+
+for (Einzelteil in names(list_of_parts_clean)) { 
+  
+  list_of_parts_clean[[Einzelteil]] <- list_of_parts_clean[[Einzelteil]] %>% 
+    rename_with(
+        ~ paste0(., "_T", n), 
+        .cols = all_of(cols))
+
+  n <- n+1
 }
 
 ```
