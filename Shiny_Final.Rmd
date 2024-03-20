@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #Laden von benötigten Paketen
+
 ```{r}
 if(!require(install.load)){
   install.packages("install.load")
@@ -18,81 +19,113 @@ library(install.load)
 install_load("DT","leaflet","leaflet.extras","plotly","tidyverse","shiny","shinythemes")
 ```
 
-
-
 ```{r}
 
 # UI
 ui <- fluidPage(
-  titlePanel("Datenanalyse"),
+  titlePanel(title = div(img(src = "autos.png", alt = "Mein Logo", height = "50px"),"Datenanalyse")),
+  tags$head(
+    tags$style(HTML("
+      body {
+        background-color: lightsteelblue;
+      }
+
+      .navbar {
+        background-color: lightsteelblue !important;
+      }
+
+      .sidebar {
+        background-color: lightsteelblue !important;
+      }
+    "))
+  ),
   tabsetPanel(
     tabPanel("Suche",
-             fluidPage(
-               titlePanel("Autokarte"),
-               tags$style(HTML("
-                                #search_panel {
-                                  position: absolute;
-                                  top: 250px;
-                                  left: 40px;
-                                  z-index: 1000; /* Legt die Stapelreihenfolge über die Karte fest */
-                                  background-color: lightsteelblue; /* Hintergrundfarbe des Suchfelds */
-                                  padding: 10px; /* Abstand um das Suchfeld */
-                                  border-radius: 5px; /* Abgerundete Ecken für das Suchfeld */
-                                }
-                              ")),
-               div(id = "search_panel",
-                   textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
-                   actionButton("search_button", "Suche starten"),
-                   verbatimTextOutput("vehicle_status")  # Benachrichtigungsfeld
-               ),
-               leafletOutput("map", width = "100%", height = "calc(100vh - 80px)")
-             )
+      fluidPage(
+        titlePanel("Autokarte"),
+          tags$style(HTML("
+            #search_panel {
+              position: absolute;
+              top: 180px; /* Anpassen der Position nach Bedarf */
+              left: 85px; /* Anpassen der Position nach Bedarf */
+              z-index: 1000;
+              background-color: lightsteelblue;
+              padding: 10px;
+              border-radius: 5px;
+              border: 3px solid white; /* Rahmen um das Suchfeld */
+            }
+      
+            #map-container {
+              border: 3px solid white; /* Rahmen um die Karte */
+              border-radius: 5px;
+              padding: 0px;
+            }
+          ")),
+            div(
+              id = "search_panel",
+              textInput("vehicle_id", "Fahrzeug-ID eingeben:"),
+              actionButton("search_button", "Suche starten"),
+              verbatimTextOutput("vehicle_status")
+            ),
+            div(
+              id = "map-container",
+              leafletOutput("map", width = "100%", height = "calc(100vh - 150px)")
+            )
+      )
     ),
+    
     tabPanel("Produktionsmenge",
-               sidebarLayout(
-                 sidebarPanel(
-                   titlePanel("Filter"),
-                   dateInput("from_date", "Produktionszeitraum von"),
-                   dateInput("to_date", "Produktionszeitraum bis"),
-                   selectInput("ebene_dropdown", "Ebene auswählen:", choices = c("Komponente", "Einzelteile"))
-                 ),
-                 mainPanel(
-                  plotlyOutput("histogram")
-                 )
-               )
-             
-    ),
+  fluidPage(
+    sidebarLayout(
+      sidebarPanel(
+        titlePanel("Filter"),
+        dateInput("from_date", "Produktionszeitraum von"),
+        dateInput("to_date", "Produktionszeitraum bis"),
+        selectInput("ebene_dropdown", "Ebene auswählen:", choices = c("Komponente", "Einzelteile")),
+        actionButton("Balkendiagramm_generieren", "Erstellen"),
+        style = "margin-top: 50px; border: 5px solid white; border-radius: 5px; padding: 10px;" 
+      ),
+      mainPanel(
+        plotlyOutput("histogram"),
+        style = "margin-top: 20px; border: 5px solid white; border-radius: 5px; padding: 10px;" 
+      )
+    )
+  )
+),
+
     tabPanel("Daten",
-             fluidPage(
-               titlePanel("Große Datenbank"),
-               DTOutput("daten_tabelle")
-             )
+      fluidPage(
+        titlePanel("Große Datenbank"),
+        DTOutput("daten_tabelle")
+      )
     ),
     tabPanel("Nutzungsdauer - Vergleich",
-             
       sidebarLayout(
         sidebarPanel(
-          titlePanel("Eingabe"),
+          titlePanel("Filter"),
           textInput("zip_code1", "Enter Zip Code 1:"),
           textInput("zip_code2", "Enter Zip Code 2:"),
-          actionButton("boxplot_generieren", "Generate Box Plot")
+          actionButton("boxplot_generieren", "Generate Box Plot"),
+          style = "margin-top: 20px; border: 5px solid white; border-radius: 5px; padding: 10px;"
         ),
         mainPanel(
           fluidRow(
             column(width = 6, 
-                   plotlyOutput("boxplot_left", height = "400px")  
+              div(class = "boxplot-container", 
+                plotlyOutput("boxplot_left", height = "400px")
+              )
             ),
             column(width = 6, 
-                   plotlyOutput("boxplot_right", height = "400px")  
+              div(class = "boxplot-container", 
+                plotlyOutput("boxplot_right", height = "400px")
+              )
             )
-          )
+          ),
+          style = "margin-top: 20px; border: 5px solid white; border-radius: 5px; padding: 10px;"
         )
       )
     )
-
-
-   
-)
+  )
 )
 
 
@@ -119,30 +152,36 @@ server <- function(input, output, session) {
       setView(lng = 10.4515, lat = 51.1657, zoom = 6)
   })
   
-  # Produktionsmenge Histogramm
-   # Generate histogram based on filtered data
-  filtered_data <- reactive({
-    from_date <- input$from_date
-    to_date <- input$to_date
-    
-    # Filter data based on selected date range
-    filtered <- Große_Datenbank %>%
-      filter(Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date) %>%
-      mutate(Komponente = substr(ID_Komponente, 1, 2))
-    
-    return(filtered)
-  })
   
-  output$histogram <- renderPlotly({
-    if (input$ebene_dropdown == "Komponente") {
-      # Plot histogram for Komponente
+  
+  
+  observeEvent(input$Balkendiagramm_generieren, {
+   
+    
+    # Produktionsmenge Histogramm
+    # Generate histogram based on filtered data
+    filtered_data <- reactive({
+      from_date <- isolate(input$from_date)
+      to_date <- isolate(input$to_date)
+      
+      # Filter data based on selected date range
+      filtered <- Große_Datenbank %>%
+        filter(Fahrzeug_Produktionsdatum >= from_date & Fahrzeug_Produktionsdatum <= to_date) %>%
+        mutate(Komponente = substr(ID_Komponente, 1, 2))
+      
+      return(filtered)
+    })
+    
+    
+     output$histogram <- renderPlotly({
+    if (isolate(input$ebene_dropdown) == "Komponente") {
+      # Plot Balkendiagramm für Komponente
       ggplotly(
       ggplot(filtered_data(), aes(x = OEM_Ort, fill = Komponente)) +
         geom_bar(position = "stack") +
         labs(title = "Produktionsmengen", x = "OEM Werk", y = "Komponentenmengen")
       )
-    } else if (input$ebene_dropdown == "Einzelteile") {
-      # Pivot data for Einzelteile
+    } else if (isolate(input$ebene_dropdown) == "Einzelteile") {
       
       oem_parts_df <- filtered_data() %>%
         select(OEM_Ort, starts_with("ID_T"))
@@ -151,7 +190,7 @@ server <- function(input, output, session) {
       
       oem_parts_sum <- aggregate(Anzahl_Einzelteile ~ OEM_Ort, data = oem_parts_df, FUN = sum)
 
-      # Plot Balekndiagramm for Einzelteile
+      # Plot Balekndiagramm für Einzelteile
       ggplotly(
       ggplot(oem_parts_sum, aes(x = OEM_Ort, y = Anzahl_Einzelteile)) +
        geom_bar(stat = "identity", fill = "lightsteelblue") +
@@ -162,6 +201,8 @@ server <- function(input, output, session) {
       
      }
    })
+ })
+  
   
   # Tabelle mit den Daten
   ## Filtern und formatieren der Daten
@@ -177,7 +218,7 @@ server <- function(input, output, session) {
              starts_with("Fehlerhaft_Datum_T"),
              starts_with("Fehlerhaft_Fahrleistung_T")) %>%
       mutate(across(contains("Datum"), as.Date),
-             across(contains("Fahrleistung"), round, digits = 0))  # Runden der Fahrleistung auf ganze Zahlen
+             across(contains("Fahrleistung"), ~ round(., digits = 0)))  # Runden der Fahrleistung auf ganze Zahlen
   })
   
   # Anzeigen der Daten in einer interaktiven Tabelle
@@ -185,7 +226,8 @@ server <- function(input, output, session) {
     datatable(daten(), 
               options = list(pageLength = 10),  # Anzahl der Zeilen pro Seite
               rownames = FALSE) %>%  # Keine Zeilennummern anzeigen
-      formatStyle(names(daten()), background = "lightsteelblue", fontWeight = "bold")  # Hintergrundfarbe und Schriftstärke für alle Spalten festlegen
+      formatStyle(names(daten()), background = "white", fontWeight = "bold") # Hintergrundfarbe und Schriftstärke für alle Spalten festlegen
+
   })
   
   # Fahrzeug-Suche
@@ -265,11 +307,11 @@ server <- function(input, output, session) {
   output$boxplot_left <- renderPlotly({
       p1 <- plot_ly(PLZ1, x = ~Postleitzahl, y = ~Komponente_Fehlerhaft_Fahrleistung, 
                     type = 'box', 
-                    name = paste("Boxplot for", zip_code1), 
+                    name = paste("Boxplot für", zip_code1), 
                     marker = list(color = 'lightsteelblue')) %>%
-        layout(title = paste("Boxplot for", zip_code1),
-               xaxis = list(title = "Zip Code"),
-               yaxis = list(title = "Nutzungsdauer"))
+        layout(title = paste("Boxplot für", zip_code1),
+               xaxis = list(title = "Postleitzahl"),
+               yaxis = list(title = "Fahrleistung (km)"))
       
       p1
     })
@@ -277,11 +319,11 @@ server <- function(input, output, session) {
     output$boxplot_right <- renderPlotly({
       p2 <- plot_ly(PLZ2, x = ~Postleitzahl, y = ~Komponente_Fehlerhaft_Fahrleistung, 
                     type = 'box', 
-                    name = paste("Boxplot for", zip_code2), 
+                    name = paste("Boxplot für", zip_code2), 
                     marker = list(color = 'lightsteelblue')) %>%
-        layout(title = paste("Boxplot for", zip_code2),
-               xaxis = list(title = "Zip Code"),
-               yaxis = list(title = "Nutzungsdauer"))
+        layout(title = paste("Boxplot für", zip_code2),
+               xaxis = list(title = "Postleitzahl"),
+               yaxis = list(title = "Fahrleistung (km)"))
       
       p2
     })
@@ -292,7 +334,7 @@ server <- function(input, output, session) {
 ```
 
 ####Shiny Applikation ausführen
+
 ```{r}
 shinyApp(ui, server)
 ```
-
