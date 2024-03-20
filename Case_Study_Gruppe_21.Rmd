@@ -10,6 +10,8 @@ output:
     number_sections: true
 ---
 
+#Vorbereitung
+Notwendiger Code um später die RMarkdowndatei in HTML knitten zu können. 
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -135,7 +137,7 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
 
 CSV- und TXT-Dateien werden gesondert eingelesen, da sich letztere als komplizierter erwiesen haben. 
 
-##Einlesen der CSV-Dateien und speichern in der Liste "list_of_parts"
+##Einlesen der Einzelteil CSV-Dateien und speichern in der Liste "list_of_parts"
 Der folgende Code durchläuft alle Dateien in unserem Datenordner. Wenn eine Datei geprüft wird, die nicht Teil unserer Suchgruppe ist, wird eine entsprechende Meldung erzeugt. Es unterscheidet auch zwischen Separator ";" und ",". 
 
 ```{r}
@@ -171,7 +173,7 @@ for(file in file_list_csv){
   
 ```
 
-##Einlesen der TXT-Dateien
+##Einlesen der Einzelteil TXT-Dateien
 
 Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen korrigiert werden mussten. Bei Einzeilteil_T31.txt musste man zuerst die Separatoren zu einem lesbaren Format wechseln. Dafür wurde die Funktion str_replace_all() genutzt. T31 hatte auch spezielle Charaktere () die speziell behandelt wurden mit einem erneuten str_replace_all().
 
@@ -236,6 +238,170 @@ list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 ```
 
+## Einlesen der Komponentendateien
+
+Es wird dasselbe Verfahren wie im vorangegangenen Codeblock angewandt, diesmal jedoch auf der Ebene der Komponenten. 
+
+```{r}
+
+komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
+
+bestandteilek_li <- c("Bestandteile_Komponente_K4.csv", "Bestandteile_Komponente_K5.csv", "Bestandteile_Komponente_K6.csv", "Bestandteile_Komponente_K7.csv")
+
+col_names <- c("","X1","ID_Karosserie",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_components <- list()
+list_of_bestandcomponents <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% komponenten_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file == "Komponente_K7.txt"){
+        
+        data <- readLines(full_path)
+        
+        list_of_components[[file]] <- read.table(text = data, sep = "\t", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names)
+        
+      }else if(file=="Komponente_K4.csv" | file=="Komponente_K6.csv"){
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv2(full_path) 
+      }
+      else {
+        
+        #read_csv zum einlesen mit Komma-Trennzeichen 
+        list_of_components[[file]] <- read_csv(full_path) 
+      }
+    }
+  }
+  else if(file %in% bestandteilek_li){
+    if(file.exists(full_path)){
+        list_of_bestandcomponents[[file]] <- read_csv2(full_path) 
+      }
+
+ }
+}
+
+  
+```
+
+## Einlesen der Fahrzeugdateien
+
+```{r}
+car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
+car_be_li <- c("Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
+
+#Erzeugung leere Liste für die Komponenten
+list_of_cars <- list()
+list_of_cars_be <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% car_li){
+    
+  
+    if(file.exists(full_path)){
+      if(file=="Fahrzeuge_OEM1_Typ11.csv" | file=="Fahrzeuge_OEM2_Typ21.csv"){
+        list_of_cars[[file]] <- read_csv(full_path)
+      }
+      else if(file=="Fahrzeuge_OEM1_Typ12.csv" | file=="Fahrzeuge_OEM2_Typ22.csv"){
+        list_of_cars[[file]] <- read_csv2(full_path)
+      }
+         
+    }
+  }
+  else if(file %in% car_be_li){
+    if(file.exists(full_path)){
+      list_of_cars_be[[file]] <- read_csv2(full_path) 
+    }
+  }
+}
+
+  
+```
+
+## Einlesen der Geodaten
+
+```{r}
+
+geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
+
+#Erzeugung leere Liste für die Geodaten
+list_of_geo <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% geo_li){
+    if(file.exists(full_path)){
+      data <- readLines(full_path)
+      
+      #Ersetze L„ngengrad mit Laengengrad
+      data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
+      data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_geo[[file]] <- read.table(text = data, sep = ";", header= TRUE)
+      }
+    }
+}
+
+```
+
+## Einlesen der OEM-Werke
+Für das Einlesen der OEM-Werke wurden ausschließlich die Tier1 Werke betrachtet, da nur diese für unsere Analyse von Relevanz sind. 
+
+```{r}
+
+OEM_li <- c("OEM_Werke_2017-07-04_TrR.csv")
+
+list_of_OEM <- list()
+
+folder_path <- "./Data"
+
+file_list <- list.files(folder_path)
+
+for(file in file_list){
+  
+  full_path <- paste0(folder_path, "/", file)
+  
+  if(file %in% OEM_li){
+    if(file.exists(full_path)){
+      data <- readLines(full_path)
+      
+      #Ersetze L„ngengrad mit Laengengrad
+      data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
+      data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
+      
+      #Füge Datei der Liste hinzu 
+      list_of_OEM[[file]] <- read.table(text = data, sep = ";", header= TRUE)
+      }
+    }
+}
+
+```
+
 # Aufbereitung und einlesung der Dateien 
 
 Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
@@ -297,7 +463,6 @@ cleaner_einzelteile <- function(Einzelteil){
     }
   }
 }
-
 
 ```
 
@@ -423,6 +588,41 @@ cleaning_T34_T35 <- function(Einzelteil,data){
 Die Säuberung der Komponentenebene erwies sich als einfacher. Es wurde entschieden eine Funktion, cleaner(), nur für Komponenten zu schreiben. 
 
 ```{r}
+cleaning_Komponenten <- function(Komponente){
+  
+  
+  data <- list_of_components[[Komponente]]
+  clean_component <- cleaner(data)
+  if(Komponente %in% Gruppe1_Komponente){
+    
+    clean_component <- adjust_classes(clean_component)
+    
+    
+    clean_component <- clean_component[!is.na(clean_component$ID_Karosserie), ]
+    
+    return(clean_component)
+    
+  }else if(Komponente %in% Gruppe2_Komponente){
+    
+    clean_component <- clean_component %>% 
+      rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_component[1]), Produktionsdatum, everything())
+    
+    clean_component$Produktionsdatum <-  as.Date(clean_component$Produktionsdatum, origin = "1970-01-01")
+    
+    clean_component$origin <- NULL 
+    
+    
+    clean_component <- clean_component[!is.na(clean_component$ID_Karosserie), ]
+    
+    clean_component <- adjust_classes(clean_component)
+    
+    return(clean_component)
+  }
+  
+  
+}
+
 cleaner <- function(data) {
     data$X <- NULL
     data$X.1 <- NULL
@@ -462,6 +662,38 @@ cleaner <- function(data) {
 
 ```
 
+### Säuberungsfunktion der Fahrzeugebene
+
+```{r}
+cleaning_cars <- function(Fahrzeug){
+  
+  data <- list_of_cars[[Fahrzeug]]
+  clean_car <- cleaner(data)
+  
+  if(Fahrzeug %in% Gruppe1_Autos){
+
+    clean_car <- adjust_classes(clean_car)  
+
+    return(clean_car)
+
+  }else if(Fahrzeug %in% Gruppe2_Autos){
+
+    clean_car <- clean_car %>%
+      rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_car[1]), Produktionsdatum, everything())
+
+    clean_car$Produktionsdatum <-  as.Date(clean_car$Produktionsdatum, origin = "1970-01-01")
+
+    clean_car$origin <- NULL
+
+    clean_car <- adjust_classes(clean_car)
+
+    return(clean_car)
+  }
+}
+
+```
+
 ### Funktion zum anpassen der Klassen der Spalten 
 Diese Funktion passt die Klassen der Spalten im Dataframe an. Sie konvertiert bestimmte Spalten in das Datumsformat, bestimmte Spalten in das Zeichenformat und bestimmte Spalten in das numerische Format. Dies ist notwendig um später die verschiedenen Dataframes zu joinen.
 
@@ -478,8 +710,8 @@ adjust_classes <- function(df) {
 
 ```
 
-## Ausführung der Säuberung 
 
+## Ausführung der Einzelteil Säuberung 
 
 ```{r}
 
@@ -521,4 +753,251 @@ for (Einzelteil in names(list_of_parts_clean)) {
 }
 
 ```
+
+## Ausführung der Komponenten Säuberung 
+
+Es wird das gleiche Verfahren wie bei den Einzelteilen angewandt, diesmal jedoch auf der Ebene der Komponenten. Für die Komponentenebene gibt es zusätzliche Dateien mit der Bezeichnung "Bestandteile". Diese Dateien werden später verwendet, um die verschiedenen Ebenen miteinander zu verbinden.
+
+```{r}
+Gruppe1_Komponente <- c("Komponente_K4.csv","Komponente_K5.csv")
+Gruppe2_Komponente <- c("Komponente_K6.csv","Komponente_K7.txt")
+
+list_of_components_clean <- list()
+for(Komponente in names(list_of_components)){
+  
+  list_of_components_clean[[Komponente]] <- cleaning_Komponenten(Komponente)
+  
+}
+
+#Säuberung der Bestandteile
+cleandata <- cleaner(list_of_bestandcomponents$Bestandteile_Komponente_K4.csv)
+K4_Best <- cleandata[!is.na(cleandata$ID_K4), ]
+K4_Best <- K4_Best %>%
+  rename(ID_Komponente = ID_K4)
+  
+cleandata <- cleaner(list_of_bestandcomponents$Bestandteile_Komponente_K5.csv)
+K5_Best <- cleandata[!is.na(cleandata$ID_K5), ]
+K5_Best <- K5_Best %>%
+  rename(ID_Komponente = ID_K5)
+
+cleandata <- cleaner(list_of_bestandcomponents$Bestandteile_Komponente_K6.csv)
+K6_Best <- cleandata[!is.na(cleandata$ID_K6), ]
+K6_Best <- K6_Best %>%
+  rename(ID_Komponente = ID_K6)
+
+cleandata <- cleaner(list_of_bestandcomponents$Bestandteile_Komponente_K7.csv)
+K7_Best <- cleandata[!is.na(cleandata$ID_K7), ]
+K7_Best <- K7_Best %>%
+  rename(ID_Komponente = ID_K7)
+
+```
+
+## Ausführung der Fahrzeug Säuberung 
+
+```{r}
+list_of_cars_clean <- list()
+
+Fahrzeuge_full <- tibble(
+  ID_Fahrzeug = character(),
+  Produktionsdatum = as.Date(NA),
+  Herstellernummer = numeric(),
+  Werksnummer = numeric(),
+  Fehlerhaft = numeric(),
+  Fehlerhaft_Datum = as.Date(NA),
+  Fehlerhaft_Fahrleistung = numeric()
+)
+
+Gruppe1_Autos <- c("Fahrzeuge_OEM1_Typ11.csv","Fahrzeuge_OEM1_Typ12.csv")
+Gruppe2_Autos <- c("Fahrzeuge_OEM2_Typ21.csv","Fahrzeuge_OEM2_Typ22.csv")
+
+for(Fahrzeug in names(list_of_cars)){
+  
+  list_of_cars_clean[[Fahrzeug]] <- cleaning_cars(Fahrzeug)
+  
+  Fahrzeuge_full <- full_join(Fahrzeuge_full,list_of_cars_clean[[Fahrzeug]])
+}
+
+#Säuberung Bestandteile Fahrzeuge
+
+cleandata <- cleaner(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ11.csv)
+cleandata <- cleandata[,c(1,5)]
+B_OEM1_11 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <-cleaner(list_of_cars_be$Bestandteile_Fahrzeuge_OEM1_Typ12.csv)
+cleandata <- cleandata[,c(1,5)]
+B_OEM1_12 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ21.csv)
+cleandata <- cleandata[,c(1,5)]
+B_OEM2_21 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+cleandata <- cleaner(list_of_cars_be$Bestandteile_Fahrzeuge_OEM2_Typ22.csv)
+cleandata <- cleandata[,c(1,5)]
+B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
+
+```
+
+## Ausführung der OEM Werk Säuberung
+
+```{r}
+cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
+
+OEMs <- cleandata[!is.na(cleandata$ORT), ]
+OEMs$Werk <- sub("^O", "", OEMs$Werk)
+
+OEMs <- OEMs %>%
+  rename(Postleitzahl = PLZ ) %>%
+  rename(OEM_Breitengrad = Breitengrad) %>%
+  rename(OEM_Laengengrad = Laengengrad) %>%
+  rename(OEM_Ort = ORT) %>%
+  mutate(Werk = as.numeric(Werk)) %>%
+  rename(Fahrzeug_Werksnummer = Werk) %>%
+  rename(OEM_Postleitzahl = Postleitzahl)
+
+```
+
+## Ausführung der Geodaten Säuberung
+
+```{r}
+cleandata <- cleaner(list_of_geo$"Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv")
+Gemeinden <- cleandata[!is.na(cleandata$Postleitzahl), ]
+
+cleandata <- cleaner(list_of_geo$"Zulassungen_alle_Fahrzeuge.csv")
+Zulassungen <- cleandata[!is.na(cleandata$IDNummer), ]
+  
+Zulassungen <- Zulassungen %>%
+  rename(ID_Fahrzeug = IDNummer) %>%
+  rename(Gemeinde = Gemeinden)
+```
+
+#Joining der Dataframes 
+
+## Komponenten 
+
+```{r}  
+
+Komponenten_full <- tibble(
+  ID_Karosserie = character(),
+  Produktionsdatum = as.Date(NA),
+  Herstellernummer = numeric(),
+  Werksnummer = numeric(),
+  Fehlerhaft = numeric(),
+  Fehlerhaft_Datum = as.Date(NA),
+  Fehlerhaft_Fahrleistung = numeric()
+)
+
+for(Komponente in names(list_of_components_clean)){
+  
+  Komponenten_full <- full_join(Komponenten_full,list_of_components_clean[[Komponente]])
+  
+}
+
+#Umbennenung der Spalten 
+Komponenten_full <- Komponenten_full %>%
+  rename(ID_Komponente = ID_Karosserie,
+         Komponente_Produktionsdatum = Produktionsdatum,
+         Komponente_Fehlerhaft_Datum = Fehlerhaft_Datum,
+         Komponente_Werksnummer = Werksnummer,
+         Komponente_Fehlerhaft = Fehlerhaft,
+         Komponente_Herstellernummer = Herstellernummer,
+         Komponente_Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung)
+ 
+#Joining der Bestandteile zu einem großen tibble
+Komponenten_full_be <- full_join(K4_Best,K5_Best)
+Komponenten_full_be <- full_join(Komponenten_full_be,K6_Best)
+Komponenten_full_be <- full_join(Komponenten_full_be,K7_Best)
+
+```
+
+## Fahrzeuge
+
+```{r}  
+
+Fahrzeuge_full_be <- tibble(
+  ID_Karosserie = character(),
+  ID_Fahrzeug = character()
+)
+
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM1_11)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM1_12)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_21)
+Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_22)
+```
+
+## Geodaten und Zulassungen
+
+```{r}  
+Zulassungen_Gemeinde <- left_join(Zulassungen, Gemeinden, by="Gemeinde")
+```
+
+##Joining der Komponenten- und Fahrzeugdaten mit den Bestandteilen 
+
+```{r}
+
+#Fahrzeuge joinen mit Bestandteilen 
+Fahrzeuge <- left_join(Fahrzeuge_full_be, Fahrzeuge_full, by="ID_Fahrzeug")
+
+Fahrzeuge <- Fahrzeuge %>%
+  select(ID_Fahrzeug,names(Fahrzeuge[3:8]),ID_Karosserie) %>%
+  rename(ID_Komponente = ID_Karosserie,
+         Fahrzeug_Produktionsdatum = Produktionsdatum,
+         Fahrzeug_Fehlerhaft_Datum = Fehlerhaft_Datum,
+         Fahrzeug_Werksnummer = Werksnummer,
+         Fahrzeug_Fehlerhaft = Fehlerhaft,
+         Fahrzeug_Herstellernummer = Herstellernummer,
+         Fahrzeug_Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung)
+
+#Komponenten joinen mit Bestandteilen
+Komponenten <- left_join(Komponenten_full,Komponenten_full_be,by="ID_Komponente")
+
+```
+
+##OEMs, Einzelteile, Komponenten und Fahrzeuge joinen 
+
+```{r}
+
+ Große_Datenbank <- left_join(Fahrzeuge, OEMs, by="Fahrzeug_Werksnummer")
+ Große_Datenbank <- left_join(Große_Datenbank, Komponenten, by="ID_Komponente")
+
+for(Einzelteil in names(list_of_parts_clean)){
+  
+  Große_Datenbank <- left_join(Große_Datenbank,list_of_parts_clean[[Einzelteil]], by=names(list_of_parts_clean[[Einzelteil]])[1])
+}
+
+```
+
+##Filterung und letzte Vorbereitungen der finalen Datenbank nach relevanten Daten 
+
+```{r}
+
+Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
+
+Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+
+# Ersetze "," durch "." und konvertiere dann in Numeric
+Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
+Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
+
+Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
+Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
+
+```
+
+#Auswertung der Daten und Vorbereitung für Shiny-App 
+
+##Vorbereitung für die Heatmap 
+Zuerst zählen wir, wie oft fehlerhafte Autos in der jeweiligen Gemeinde vorkamen, um aus diesen Informationen die Heatmpa zu erstellen. 
+
+```{r}
+Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>% 
+  group_by(Gemeinde) %>% 
+  summarize(Anzahl_Fehler = n(),
+            Laengengrad = first(Laengengrad),  
+            Breitengrad = first(Breitengrad),
+            Postleitzahl = first(Postleitzahl))
+
+Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
+```
+
+
 
