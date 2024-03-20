@@ -8,14 +8,19 @@ date: "2024-03-18"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Laden von benötigten Paketen
 ```{r}
-library(DT)
-library(leaflet)
-library(leaflet.extras)
-library(plotly)
-library(tidyverse)
-library(shiny)
-library(shinythemes)
+if(!require(install.load)){
+  install.packages("install.load")
+}
+
+library(install.load)
+install_load("DT","leaflet","leaflet.extras","plotly","tidyverse","shiny","shinythemes")
+```
+
+
+
+```{r}
 
 # UI
 ui <- fluidPage(
@@ -119,7 +124,9 @@ ui <- fluidPage(
   )
 )
 )
+```
 
+```{r}
 # Server
 server <- function(input, output, session) {
   
@@ -210,13 +217,13 @@ server <- function(input, output, session) {
   
   # Fahrzeug-Suche
   observeEvent(input$search_button, {
-        req(input$vehicle_id)  # Stellen Sie sicher, dass eine Fahrzeug-ID eingegeben wurde
+        req(input$vehicle_id)  # Stelle sicher, dass eine Fahrzeug-ID eingegeben wurde
     
     if(input$vehicle_id %in% Große_Datenbank2$ID_Fahrzeug) {
       # Extrahieren Sie die Informationen zum Fahrzeug
       vehicle_info <- Große_Datenbank2[Große_Datenbank2$ID_Fahrzeug == input$vehicle_id, ]
       fehlerhaft <- paste("Ihr Fahrzeug mit der ID ", input$vehicle_id," ist fehlerhaft!")
-      # Bestimmen Sie, ob das Fahrzeug, die Komponente oder eines der Einzelteile fehlerhaft ist
+      # Bestimme, ob das Fahrzeug, die Komponente oder eines der Einzelteile fehlerhaft ist
       if (!is.na(vehicle_info$Fahrzeug_Fehlerhaft_Datum)) {
         fehler_text <- "Das Fahrzeug ist fehlerhaft."
         fehler_datum <- vehicle_info$Fahrzeug_Fehlerhaft_Datum
@@ -226,7 +233,7 @@ server <- function(input, output, session) {
         fehler_datum <- vehicle_info$Komponente_Fehlerhaft_Datum
         fehler_fahrleistung <- vehicle_info$Komponente_Fehlerhaft_Fahrleistung
       } else {
-        # Überprüfen Sie jedes Einzelteil
+        # Überprüfe jedes Einzelteil
         fehler_text <- NULL
         for (i in 30:40) {
           column_name <- paste("Fehlerhaft_Datum_T", i, sep = "")
@@ -250,13 +257,13 @@ server <- function(input, output, session) {
         
       )
       
-      # Fügen Sie den CircleMarker zur Karte hinzu
+      # Füge den CircleMarker zur Karte hinzu
       leafletProxy("map", session) %>%
         clearMarkers() %>%
         addCircleMarkers(lng = vehicle_info$Laengengrad, lat = vehicle_info$Breitengrad, radius = 10, 
                          popup = popup_text)
       
-      # Geben Sie den Fehlerstatus aus
+      # Gebe die den Fehlerstatus aus
       output$vehicle_status <- renderText({
         paste("Fehlerstatus: ", fehlerhaft)
       })
@@ -308,9 +315,10 @@ server <- function(input, output, session) {
 
 
 }
+```
 
-# Shiny App starten
+####Shiny Applikation ausführen
+```{r}
 shinyApp(ui, server)
-
 ```
 
