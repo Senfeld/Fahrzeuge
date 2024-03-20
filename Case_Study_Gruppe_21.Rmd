@@ -1,0 +1,98 @@
+---
+title: "Case Study Gruppe 21"
+author: Fabian Christian Brak, Malik Dogan, Valentin Benjamin Jimenez Anders, Julius
+  Kiso, Theo Grothey
+date: "2024-03-17"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Laden von nötigen Paketen 
+
+Zunächst werden die nötigen Packages installiert und geladen, falls nicht bereits vorhanden:
+```{r, echo=FALSE}
+suppressWarnings({
+
+if(!require(tidyverse)){
+  install.packages("tidyverse")
+}
+library(tidyverse)
+})
+```
+
+#Vorbereitung
+Hier werden einige Vorbereitungen getroffen, um das einlesen zu vereinfachen. In *our_csv* ist schon festgelegt, welche CSV-Dateien für uns relevant sind, damit die Schleife direkt nach diesen suchen kann. Das gleiche für *our_txt*.
+Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert. 
+
+```{r}
+folder_path <- "./Data"
+
+#Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
+our_txt <- c("Einzelteil_T31.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
+our_special_txt <- c("Einzelteil_T34.txt","Einzelteil_T35.txt")
+
+our_csv <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T33.csv","Einzelteil_T37.csv","Einzelteil_T38.csv","Einzelteil_T40.csv")
+
+col_names_v1 <- c("","X1", "ID_T39.x", "Produktionsdatum.x", "Herstellernummer.x", "Werksnummer.x", 
+               "Fehlerhaft.x", "Fehlerhaft_Datum.x", "Fehlerhaft_Fahrleistung.x", 
+               "ID_T39.y", "Produktionsdatum.y", "Herstellernummer.y", "Werksnummer.y", 
+               "Fehlerhaft.y", "Fehlerhaft_Datum.y", "Fehlerhaft_Fahrleistung.y")
+
+col_names_v2 <- c( "","X1","ID_T36",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
+
+col_names_v3 <- c( "","X1","ID_T31",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
+
+
+#Dateien mit Semikolon als Seperator
+semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
+
+
+#Erzeugung leere Liste für die Einzelteile
+list_of_parts <- list()
+
+
+```
+
+## Funktionen zum einlesen von T34 und T35
+Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keinen eindeutigen Zeilenumbruch hatten. Hier musste also ein Muster identifiziert werden, vor welches jeweils ein Zeilenumbruch eingefügt werden sollte.
+
+### T34 Funktion
+Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
+Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl
+und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen.
+Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+```{r}
+reading_T34 <- function(data){
+  
+  gesamter_text <- paste(data, collapse = " ")
+
+gesamter_text <- gsub("(?<!^)(\"\\d+-\\d+-\\d+-\\d+\" \\| \\| )", "\n\\1", gesamter_text, perl = TRUE)
+
+# Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
+gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
+
+#Entfernen Spalte "X1"
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+   sub("^\\\"X1\" \\| \\| ", "", x)
+})
+
+# Ersetze | | und \ durch Komma in jedem Datensatz
+gesplitteter_text <- lapply(gesplitteter_text, function(x) {
+  x <- gsub("\\| \\|", ",", x) # Ersetze | | durch Komma
+  gsub("\\\\", ",", x)         # Ersetze \ durch Komma
+})
+
+ txt_to_csv <- paste(gesplitteter_text, collapse = "\n")
+ T34 <- read_csv(txt_to_csv, col_names = TRUE)
+ 
+ return(T34)
+}
+```
+
