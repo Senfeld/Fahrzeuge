@@ -242,6 +242,8 @@ Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich 
 
 ## Funktionen für die Säuberung 
 
+Die Hauptfunktion cleaner_einzeltiel dient zur Säuberung und vereinheitlichung der einzelnen Einzelteil-Datensätze. Die Funktion unterscheidet zu welcher Subfunktion die Einzelteile zugeteilt werden müssen zur Säuberung. 
+
 ```{r}
 
 cleaner_einzelteile <- function(Einzelteil){
@@ -298,3 +300,163 @@ cleaner_einzelteile <- function(Einzelteil){
 
 
 ```
+
+### Säuberungsfunktion für generische Einzelteile
+
+Folgende Funktion, cleaning_other(), dient zur Säuberung aller Einzelteile bis auf T34 und T35, welche eine separate Funktion haben. Diese Funktion ist eingebaut in der Hauptfunktion cleaner_einzelteile().
+
+```{r}
+
+cleaning_other <- function(data){
+  
+  if (ncol(data) == 7) {
+    
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      
+      return(data)
+    }
+    else if (ncol(data) == 8) {
+      
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      
+      original_columns <- colnames(data)[1:7]
+      # Löschen des ".x" suffixes in den Spaltennamen
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      
+      return(concatenated_data)
+      
+    }
+    else if (ncol(data) == 21){
+      original_columns <- colnames(data)[!grepl("\\.x$|\\.y$", colnames(data))]
+      concatenated_data <- data.frame(matrix(nrow = 3 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[col]], data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      
+      return(concatenated_data)
+      
+    }
+}
+
+```
+
+###Säuberungsfunktion von T34 und T35
+
+Spaltennamen umbennen, hier wird Spalte 9, die 1 heißt umbenannt zu "Unsinn", da man diese sonst nicht einfach löschen könnte. Verschieben der Spalte "Produktionsdatum" auf zweite Position.
+
+```{r}
+cleaning_T34_T35 <- function(Einzelteil,data){
+  
+  if(Einzelteil == "Einzelteil_T34.txt"){
+    
+  T34 <- data 
+    
+  T34_clean <- T34 %>% 
+     rename(Produktionsdatum = Produktionsdatum_Origin_01011970,
+            Unsinn = 9) %>%
+      select(ID_T34, Produktionsdatum, everything())
+
+  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
+  T34_clean$Produktionsdatum <- as.Date(T34_clean$Produktionsdatum, origin = "1970-01-01")
+  
+  #Restliche Spalten löschen
+  T34_clean$...10 <- NULL
+  T34_clean$Unsinn <- NULL 
+  T34_clean$`origin"1`<- NULL 
+  
+  #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+  T34_clean <- T34_clean[!is.na(T34_clean$Fehlerhaft_Datum),]
+  T34_clean <- T34_clean[!is.na(T34_clean$ID_T34),]
+    
+  return(T34_clean)
+    
+  }else if(Einzelteil == "Einzelteil_T35.txt"){
+    
+    T35_clean <- data
+
+    #entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
+    T35_clean$Fehlerhaft_Fahrleistung.x <- str_replace_all(T35_clean$Fehlerhaft_Fahrleistung.x, '\"[0-9]+\"', '')
+   
+    #Umbennenung der Spalten 
+    T35_clean <- T35_clean %>% 
+       rename(ID_T35 = ID_T35.x,
+              Produktionsdatum = Produktionsdatum.x,
+              Herstellernummer = Herstellernummer.x,
+              Werksnummer = Werksnummer.x,
+              Fehlerhaft = Fehlerhaft.x,
+              Fehlerhaft_Datum = Fehlerhaft_Datum.x,
+              Fehlerhaft_Fahrleistung = Fehlerhaft_Fahrleistung.x)
+     
+    
+    T35_clean <- T35_clean %>%
+      select(names(T35_clean)[1:7])
+    
+    T35_clean <- T35_clean[!is.na(T35_clean$ID_T35),]
+    T35_clean <- T35_clean[!is.na(T35_clean$Fehlerhaft_Datum),]
+    
+    return(T35_clean)
+    
+  }else{
+    
+    print("Datei gehört nicht zu T34 oder T35 und muss somit anders gesäubert werden!")  
+    
+    }
+}
+  
+```
+
+### Säuberungsfunktion der Komponentenebene
+
+```{r}
+cleaner <- function(data) {
+    data$X <- NULL
+    data$X.1 <- NULL
+    data$X.2 <- NULL
+    data$X.3 <- NULL
+    data$X.4 <- NULL
+    data$X.5 <- NULL
+    data$X.6 <- NULL
+    data$X.7 <- NULL
+    data$X.8 <- NULL
+    data$X.9 <- NULL
+    data$X.10 <- NULL
+    data$X.11 <- NULL
+    data$X.12 <- NULL
+    data$...1 <- NULL
+    
+    if (ncol(data) == 8) {
+      column_vector <- colnames(data)
+      column_vector <- na.omit(column_vector)
+      return(data)
+    }
+    else if (ncol(data) == 14) {
+      original_columns <- colnames(data)[1:7]
+      # Remove the ".x" suffix from each column name
+      original_columns <- sub("\\.x$", "", original_columns)
+      concatenated_data <- data.frame(matrix(nrow = 2 * nrow(data), ncol = length(original_columns)))
+      colnames(concatenated_data) <- original_columns
+      for (col in original_columns) {
+        concatenated_data[[col]] <- c(data[[paste0(col, ".x")]], data[[paste0(col, ".y")]])
+      }
+      return(concatenated_data)
+    }
+    else {
+      return(data)
+    }
+}
+
+```
+
