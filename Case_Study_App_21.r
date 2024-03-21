@@ -1,4 +1,10 @@
-
+##
+## This is a Shiny web application. The application is run when clicking "Run app".
+##
+## Find out more about building applications with Shiny here:
+##
+##    http://shiny.rstudio.com/
+##
 
 if(!require(install.load)){
   install.packages("install.load")
