@@ -10,13 +10,13 @@ output:
     number_sections: true
 ---
 
-#Vorbereitung
+# Vorbereitung
 Notwendiger Code um später die RMarkdowndatei in HTML knitten zu können. 
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Laden von nötigen Paketen 
+# Laden von nötigen Paketen 
 
 Zunächst werden die nötigen Packages installiert und geladen, falls nicht bereits vorhanden:
 
@@ -30,7 +30,7 @@ library(tidyverse)
 })
 ```
 
-#Vorbereitung
+# Vorbereitung
 Hier werden einige Vorbereitungen getroffen, um das einlesen zu vereinfachen. In *our_csv* ist schon festgelegt, welche CSV-Dateien für uns relevant sind, damit die Schleife direkt nach diesen suchen kann. Das gleiche für *our_txt*.
 Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert. 
 
@@ -98,7 +98,7 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
 }
 ```
 
-###T35 Funktion
+### T35 Funktion
 Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
 Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen. Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
 ```{r}
@@ -133,7 +133,7 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
 }
 ```
 
-#Einlesen der untersuchten Dateien
+# Einlesen der untersuchten Dateien
 
 CSV- und TXT-Dateien werden gesondert eingelesen, da sich letztere als komplizierter erwiesen haben. 
 
@@ -173,7 +173,7 @@ for(file in file_list_csv){
   
 ```
 
-##Einlesen der Einzelteil TXT-Dateien
+## Einlesen der Einzelteil TXT-Dateien
 
 Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen korrigiert werden mussten. Bei Einzeilteil_T31.txt musste man zuerst die Separatoren zu einem lesbaren Format wechseln. Dafür wurde die Funktion str_replace_all() genutzt. T31 hatte auch spezielle Charaktere () die speziell behandelt wurden mit einem erneuten str_replace_all().
 
@@ -518,7 +518,7 @@ cleaning_other <- function(data){
 
 ```
 
-###Säuberungsfunktion von T34 und T35
+### Säuberungsfunktion von T34 und T35
 
 Spaltennamen umbennen, hier wird Spalte 9, die 1 heißt umbenannt zu "Unsinn", da man diese sonst nicht einfach löschen könnte. Verschieben der Spalte "Produktionsdatum" auf zweite Position.
 
@@ -875,7 +875,7 @@ Zulassungen <- Zulassungen %>%
   rename(Gemeinde = Gemeinden)
 ```
 
-#Joining der Dataframes 
+# Joining der Dataframes 
 
 ## Komponenten 
 
@@ -935,7 +935,7 @@ Fahrzeuge_full_be <- full_join(Fahrzeuge_full_be,B_OEM2_22)
 Zulassungen_Gemeinde <- left_join(Zulassungen, Gemeinden, by="Gemeinde")
 ```
 
-##Joining der Komponenten- und Fahrzeugdaten mit den Bestandteilen 
+## Joining der Komponenten- und Fahrzeugdaten mit den Bestandteilen 
 
 ```{r}
 
@@ -957,7 +957,7 @@ Komponenten <- left_join(Komponenten_full,Komponenten_full_be,by="ID_Komponente"
 
 ```
 
-##OEMs, Einzelteile, Komponenten und Fahrzeuge joinen 
+## OEMs, Einzelteile, Komponenten und Fahrzeuge joinen 
 
 ```{r}
 
@@ -971,7 +971,7 @@ for(Einzelteil in names(list_of_parts_clean)){
 
 ```
 
-##Filterung und letzte Vorbereitungen der finalen Datenbank nach relevanten Daten 
+## Filterung und letzte Vorbereitungen der finalen Datenbank nach relevanten Daten 
 
 ```{r}
 
@@ -988,9 +988,9 @@ Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
 
 ```
 
-#Auswertung der Daten und Vorbereitung für Shiny-App 
+# Auswertung der Daten und Vorbereitung für Shiny-App 
 
-##Vorbereitung für die Heatmap 
+## Vorbereitung für die Heatmap 
 Zuerst zählen wir, wie oft fehlerhafte Autos in der jeweiligen Gemeinde vorkamen, um aus diesen Informationen die Heatmap zu erstellen. 
 
 ```{r}
@@ -1004,7 +1004,7 @@ Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>%
 Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
 ```
 
-##Laden von benötigten Paketen
+## Laden von benötigten Paketen
 ```{r, message=FALSE, warning=FALSE}
 if(!require(install.load)){
   install.packages("install.load")
@@ -1014,7 +1014,7 @@ library(install.load)
 install_load("DT","leaflet","leaflet.extras","plotly","tidyverse","shiny","shinythemes")
 ```
 
-#Shiny applikation
+# Shiny applikation
 ## User Interface (UI)
 ```{r}
 ui <- fluidPage(
@@ -1324,7 +1324,7 @@ server <- function(input, output, session) {
 }
 ```
 
-##Run der Shiny-Applikation
+## Run der Shiny-Applikation
 
 ```{r, message=FALSE}
 shinyApp(ui, server)
