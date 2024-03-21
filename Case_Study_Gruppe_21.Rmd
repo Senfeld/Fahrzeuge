@@ -799,7 +799,7 @@ K7_Best <- K7_Best %>%
 
 ## Ausführung der Fahrzeug Säuberung 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 list_of_cars_clean <- list()
 
 Fahrzeuge_full <- tibble(
@@ -879,7 +879,7 @@ Zulassungen <- Zulassungen %>%
 
 ## Komponenten 
 
-```{r}  
+```{r, message=FALSE, warning=FALSE}  
 
 Komponenten_full <- tibble(
   ID_Karosserie = character(),
@@ -916,7 +916,7 @@ Komponenten_full_be <- full_join(Komponenten_full_be,K7_Best)
 
 ## Fahrzeuge
 
-```{r}  
+```{r, message=FALSE, warning=FALSE}  
 
 Fahrzeuge_full_be <- tibble(
   ID_Karosserie = character(),
@@ -1329,6 +1329,3 @@ server <- function(input, output, session) {
 ```{r, eval=FALSE, include=TRUE}
 shinyApp(ui, server)
 ```
-
-
-
