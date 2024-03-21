@@ -1357,14 +1357,21 @@ shinyApp(ui, server)
 ```
 
 ## Ergebnisse
+In diesem letzten Abschnitt zeigen wir den resultierenden Inhalt unserer Shiny App und schließen mit einer Diskussion der Ergebnisse ab. 
 
 ### Heatmap
+Die Heatmap erlaubt es dem Nutzer, sich auf der Deutschlandkarte zu bewegen, um zu sehen, wo sich die am meisten betroffenen Autos befinden. Die Heatmap ist interaktiv und der Nutzer kann nach Belieben hinein- und herauszoomen.
 
 ### Produktionsmengen
+Im zweiten Tab können die Fahrzeuglhersteller der 4 OEM-Werke für jeden beliebigen Zeitraum die Anzahl der in diesem Zeitraum produzierten Fahrzeuge mit Mängeln überprüfen. Der Hersteller kann diese Informationen auf der Ebene der Komponenten oder der Einzelteile überprüfen. Die Grafik zeigt dann die Anzahl der betroffenen Fahrzeuge von jedem OEM Werk, das Histogramm ist auch nach dem betroffenen Bauteil oder Einzelteil gefärbt. 
 
 ### Nutzungsdauervergleich
 
+
 ### Fahrzeugsuche
+
 
 ### Datensatztabelle
 
+
+### Ergebnissdiskussion
