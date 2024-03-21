@@ -139,7 +139,7 @@ CSV- und TXT-Dateien werden gesondert eingelesen, da sich letztere als komplizie
 ##Einlesen der Einzelteil CSV-Dateien und speichern in der Liste "list_of_parts"
 Der folgende Code durchläuft alle Dateien in unserem Datenordner. Wenn eine Datei geprüft wird, die nicht Teil unserer Suchgruppe ist, wird eine entsprechende Meldung erzeugt. Es unterscheidet auch zwischen Separator ";" und ",". 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 # Erstellung Vektor mit Dokumentennamen 
 file_list_csv <- list.files(folder_path,pattern="*.csv")
@@ -176,7 +176,7 @@ for(file in file_list_csv){
 
 Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen korrigiert werden mussten. Bei Einzeilteil_T31.txt musste man zuerst die Separatoren zu einem lesbaren Format wechseln. Dafür wurde die Funktion str_replace_all() genutzt. T31 hatte auch spezielle Charaktere () die speziell behandelt wurden mit einem erneuten str_replace_all().
 
-```{r warning=FALSE}
+```{r, warning=FALSE, message=FALSE}
 
 # Erstellung Vektor mit Dokumentennamen 
 file_list_txt <- list.files(folder_path,pattern="*.txt")
@@ -241,7 +241,7 @@ list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 Es wird dasselbe Verfahren wie im vorangegangenen Codeblock angewandt, diesmal jedoch auf der Ebene der Komponenten. 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
 
@@ -296,7 +296,7 @@ for(file in file_list){
 
 ## Einlesen der Fahrzeugdateien
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
 car_be_li <- c("Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
 
@@ -337,7 +337,7 @@ for(file in file_list){
 
 ## Einlesen der Geodaten
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
 
@@ -371,7 +371,7 @@ for(file in file_list){
 ## Einlesen der OEM-Werke
 Für das Einlesen der OEM-Werke wurden ausschließlich die Tier1 Werke betrachtet, da nur diese für unsere Analyse von Relevanz sind. 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 OEM_li <- c("OEM_Werke_2017-07-04_TrR.csv")
 
@@ -849,7 +849,7 @@ B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
 ```
 
 ### OEM Werke
-XXFür ValentinXX
+Die OEM_Werke Datei wurde mit der Standard-Funktion, cleaner(), gesäubert. Nach Prüfung des "sauberen" Dataframes, wurde festgestellt, dass die Spalte "Werk" ein "O" vor den Zahlen enthielt. Um dieses zu entfernen, wurde eine gsub-Funktion verwendet. Schließlich wurden die Spalten umbenannt, um die Unterscheidung mit anderen Spalten in der verbundenen Datenbank zu erleichtern. 
 ```{r}
 cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
 
@@ -857,13 +857,12 @@ OEMs <- cleandata[!is.na(cleandata$ORT), ]
 OEMs$Werk <- sub("^O", "", OEMs$Werk)
 
 OEMs <- OEMs %>%
-  rename(Postleitzahl = PLZ ) %>%
   rename(OEM_Breitengrad = Breitengrad) %>%
   rename(OEM_Laengengrad = Laengengrad) %>%
   rename(OEM_Ort = ORT) %>%
   mutate(Werk = as.numeric(Werk)) %>%
   rename(Fahrzeug_Werksnummer = Werk) %>%
-  rename(OEM_Postleitzahl = Postleitzahl)
+  rename(OEM_Postleitzahl = PLZ)
 
 ```
 
