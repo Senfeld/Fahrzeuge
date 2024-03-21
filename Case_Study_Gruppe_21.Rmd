@@ -53,7 +53,7 @@ col_names_v2 <- c( "","X1","ID_T36",  "Herstellernummer",  "Werksnummer",  "Fehl
 col_names_v3 <- c( "","X1","ID_T31",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
 
 
-# Dateien mit Semikolon als Seperator
+# Dateien mit Semikolon als Separator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
 
 
@@ -64,7 +64,8 @@ list_of_parts <- list()
 ```
 
 ## Funktionen zum einlesen von T34 und T35
-Diese beiden Dateien stellten eine besondere Herausforderung dar. Es war schwierig, beim Einlesen in R festzustellen, wo die Zeilenumbrüche gesetzt werden sollten, da kein klar erkennbares Zeichen vorhanden war. Daher musste ein spezifisches Muster identifiziert werden, um die Zeilenumbrüche entsprechend einzufügen.Zudem wurden weitere Muster identifizeirt, um unnötige Spalten zu entfernen. Das ersetzen der Zeichenketten führte jedoch in der Datei zu Fehlern, die nochmal seperat angegangen werden mussten und in der späteren Aufbereitung der Daten behoben wurden. Anschließend wurden die ursprünglichen Seperatoren durch "," ersetzt, um sie anschließend als CSV wieder einlesen zu können, da CSV-Dateien eine einfache und klare Struktur besitzen. 
+Diese beiden Dateien stellten eine besondere Herausforderung dar. Es war schwierig, beim Einlesen in R festzustellen, wo die Zeilenumbrüche gesetzt werden sollten, da kein klar erkennbares Zeichen vorhanden war. Daher musste ein spezifisches Muster identifiziert werden, um die Zeilenumbrüche entsprechend einzufügen. Zudem wurden weitere Muster identifizeirt, um unnötige Spalten zu entfernen. 
+Das ersetzen der Zeichenketten führte jedoch in der Datei zu Fehlern, die nochmal seperat angegangen werden mussten und in der späteren Aufbereitung der Daten behoben wurden. Anschließend wurden die ursprünglichen Separatoren durch "," ersetzt, um sie anschließend als CSV wieder einlesen zu können, da CSV-Dateien eine einfache und klare Struktur besitzen. 
 
 
 **T34 Funktion**
@@ -188,7 +189,7 @@ for(file in file_list_txt){
     if(file == "Einzelteil_T31.txt"){
       data <- readLines(full_path)
       
-      # Ersetze Seperatoren und füge Zeilenumbruch ein 
+      # Ersetze Separatoren und füge Zeilenumbruch ein 
       data <- str_replace_all(data, pattern = "  ", replacement = ";")
       data <- str_replace_all(data, pattern = "", replacement = "\n")
       
@@ -1354,3 +1355,16 @@ server <- function(input, output, session) {
 ```{r, eval=FALSE, include=TRUE}
 shinyApp(ui, server)
 ```
+
+## Ergebnisse
+
+### Heatmap
+
+### Produktionsmengen
+
+### Nutzungsdauervergleich
+
+### Fahrzeugsuche
+
+### Datensatztabelle
+
