@@ -995,6 +995,8 @@ for(Einzelteil in names(list_of_parts_clean)){
   Große_Datenbank <- left_join(Große_Datenbank,list_of_parts_clean[[Einzelteil]], by=names(list_of_parts_clean[[Einzelteil]])[1])
 }
  
+ Große_Datenbank <- left_join(Große_Datenbank, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+ 
 
 ```
 
@@ -1129,9 +1131,9 @@ server <- function(input, output, session) {
   #Reduzierung der Datenbank auf nur fehlerhafte Teile
   Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & 
                                         is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & 
-                                        rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
+                                        rowSums(is.na(Große_Datenbank[,30:67])) == ncol(Große_Datenbank[,30:67])),]
   
-  Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+  
 
   
   
