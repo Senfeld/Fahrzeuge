@@ -1366,12 +1366,12 @@ Die Heatmap erlaubt es dem Nutzer, sich auf der Deutschlandkarte zu bewegen, um 
 Im zweiten Tab können die Fahrzeuglhersteller der 4 OEM-Werke für jeden beliebigen Zeitraum die Anzahl der in diesem Zeitraum produzierten Fahrzeuge mit Mängeln überprüfen. Der Hersteller kann diese Informationen auf der Ebene der Komponenten oder der Einzelteile überprüfen. Die Grafik zeigt dann die Anzahl der betroffenen Fahrzeuge von jedem OEM Werk, das Histogramm ist auch nach dem betroffenen Bauteil oder Einzelteil gefärbt. 
 
 ### Nutzungsdauervergleich
-
+Im Nutzungsdauer - Vergleich Tab können zwei Gemeinden ausgewählt werden und damit werden zwei Boxplots generiert zum Vergleich der reklamierten Karosserieteile der jeweiligen Gemeinde. Die Boxplots sind interaktiv, wenn man mit dem Mauszeigerdarüber fahren, werden weitere nützliche Daten angezeigt, wie zum Beispiel der Maximalwert, Minimalwert, Median...
 
 ### Fahrzeugsuche
-
+In diesem Tab kann ein Fahrzeughalter durch seine Fahrzeug-ID prüfen ob sein Auto betroffen ist. 
 
 ### Datensatztabelle
-
+Schließlich wird auf diesem Tab der endgültige Dataframe, oder "Datenbank", wie wir sie genannt haben, angezeigt. 
 
 ### Ergebnissdiskussion
