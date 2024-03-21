@@ -9,8 +9,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #Laden von benötigten Paketen
-
-```{r}
+Mithilfe des Pakets _install.load_ lassen sich mehrere Pakete gleichzeitig aufurfen. Zudem wird gleichzeitig überprüft, ob die Installtion nötig ist. 
+```{r include=FALSE}
 if(!require(install.load)){
   install.packages("install.load")
 }
@@ -19,11 +19,24 @@ library(install.load)
 install_load("DT","leaflet","leaflet.extras","plotly","tidyverse","shiny","shinythemes")
 ```
 
+# User Interface
+In der UI wird die Bedienoberfläche für den Nutzer eingestellt. Die Hintergrundfarbe für jede Ebene wurde hier auf *lightsteelblue* gesetzt - entsprechend der Unternehmensfarben. Es wurde ebenso versucht ein Logo zu implementieren, was jedoch nicht funktioniert hat. Die Applikation wurde in 4 Tabs eingeteilt.
+
+* Suche 
+    + Ermöglicht dem Nutzer nach seiner Fahrzeug-ID zu suchen und Informationen zu erhalten, falls das Fahrzeug fehlerhahft ist 
+* Produktionsmenge 
+    + Überischt für die Produktionsmenge an Einzelteilen und Komponenten für einen beliebigen Zeitraum 
+* Daten 
+    + Bildet die relevanten Spalten der Tabelle _Große_Datenbank_ in der Applikation ab 
+* Nutzungsdauer - Vergleich 
+    + Erstellt zwei Boxplots für zwei gegebene Postleitzahlen und vergleicht die Fahrleistung 
+    
+
 ```{r}
 
 # UI
 ui <- fluidPage(
-  titlePanel(title = div(img(src = "autos.png", alt = "Mein Logo", height = "50px"),"Datenanalyse")),
+  titlePanel(span(img(src = "www\\autos.png", alt = "Mein Logo", height = "50px"),"Datenanalyse")),
   tags$head(
     tags$style(HTML("
       body {
@@ -153,7 +166,7 @@ server <- function(input, output, session) {
   })
   
   
-  
+#-------------------------------------------------------------------------------  
   
   observeEvent(input$Balkendiagramm_generieren, {
    
@@ -202,7 +215,7 @@ server <- function(input, output, session) {
      }
    })
  })
-  
+#-------------------------------------------------------------------------------------------  
   
   # Tabelle mit den Daten
   ## Filtern und formatieren der Daten
@@ -230,6 +243,9 @@ server <- function(input, output, session) {
 
   })
   
+  
+#--------------------------------------------------------------------------------------------
+    
   # Fahrzeug-Suche
   observeEvent(input$search_button, {
         req(input$vehicle_id)  # Stelle sicher, dass eine Fahrzeug-ID eingegeben wurde
@@ -288,7 +304,8 @@ server <- function(input, output, session) {
       })
     }
   })
-  
+
+#-------------------------------------------------------------------------------------------  
   
   observeEvent(input$boxplot_generieren, {
   zip_code1 <- isolate(input$zip_code1)
@@ -335,6 +352,6 @@ server <- function(input, output, session) {
 
 ####Shiny Applikation ausführen
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 shinyApp(ui, server)
 ```
