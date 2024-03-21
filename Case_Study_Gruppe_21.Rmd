@@ -1120,12 +1120,12 @@ ui <- fluidPage(
         DTOutput("daten_tabelle")
       )
     ),
-    tabPanel("Nutzungsdauer - Vergleich",
+    tabPanel("Fahrleistung - Vergleich",
       sidebarLayout(
         sidebarPanel(
           titlePanel("Filter"),
-          textInput("zip_code1", "Enter Zip Code 1:"),
-          textInput("zip_code2", "Enter Zip Code 2:"),
+          textInput("zip_code1", "Erste Postleitzahl:"),
+          textInput("zip_code2", "Zweite Postleitzahl:"),
           actionButton("boxplot_generieren", "Generate Box Plot"),
           style = "margin-top: 20px; border: 5px solid white; border-radius: 5px; padding: 10px;"
         ),
