@@ -994,41 +994,12 @@ for(Einzelteil in names(list_of_parts_clean)){
   
   Große_Datenbank <- left_join(Große_Datenbank,list_of_parts_clean[[Einzelteil]], by=names(list_of_parts_clean[[Einzelteil]])[1])
 }
+ 
 
 ```
 
-## Erstellung der zweiten großen Datenbank 
-Für die Auswertung wurde eine zweite große Datennbank erstellt namens _Große_Datenbank2_, welche ausschließlich fehlerhafte Bauteile beinhaltet. Dies vereinfacht den Umgang, da sie die ursprüngliche Datenbank verkkleinert. 
-```{r}
-
-# Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
-# 
-# Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
-# 
-# # Ersetze "," durch "." und konvertiere dann in Numeric
-# Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
-# Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
-# 
-# Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
-# Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
-
-```
 
 # Auswertung der Daten und Vorbereitung für Shiny-App 
-
-## Vorbereitung für die Heatmap 
-Zuerst zählen wir, wie oft fehlerhafte Autos in der jeweiligen Gemeinde vorkamen, um aus diesen Informationen die Heatmap zu erstellen. 
-
-```{r}
-Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>% 
-  group_by(Gemeinde) %>% 
-  summarize(Anzahl_Fehler = n(),
-            Laengengrad = first(Laengengrad),  
-            Breitengrad = first(Breitengrad),
-            Postleitzahl = first(Postleitzahl))
-
-Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
-```
 
 ## Laden von benötigten Paketen
 ```{r, message=FALSE, warning=FALSE}
@@ -1155,11 +1126,14 @@ ui <- fluidPage(
 ```{r}
 server <- function(input, output, session) {
   
+  #Reduzierung der Datenbank auf nur fehlerhafte Teile
   Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & 
                                         is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & 
                                         rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
-
+  
   Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+
+  
   
   # Ersetze "," durch "." und konvertiere dann in Numeric
   Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
@@ -1167,6 +1141,17 @@ server <- function(input, output, session) {
   
   Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
   Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
+  
+  #Gruppierung nach Gemeinden 
+  Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>% 
+                                  group_by(Gemeinde) %>% 
+                                  summarize(Anzahl_Fehler = n(),
+                                            Laengengrad = first(Laengengrad),  
+                                            Breitengrad = first(Breitengrad),
+                                            Postleitzahl = first(Postleitzahl))
+
+  Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
+  
   
   
   # Karte rendern
