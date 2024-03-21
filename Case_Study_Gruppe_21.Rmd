@@ -53,7 +53,7 @@ col_names_v2 <- c( "","X1","ID_T36",  "Herstellernummer",  "Werksnummer",  "Fehl
 col_names_v3 <- c( "","X1","ID_T31",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
 
 
-# Dateien mit Semikolon als Seperator
+# Dateien mit Semikolon als Separator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
 
 
@@ -64,7 +64,8 @@ list_of_parts <- list()
 ```
 
 ## Funktionen zum einlesen von T34 und T35
-Diese beiden Dateien stellten eine besondere Herausforderung dar. Es war schwierig, beim Einlesen in R festzustellen, wo die Zeilenumbrüche gesetzt werden sollten, da kein klar erkennbares Zeichen vorhanden war. Daher musste ein spezifisches Muster identifiziert werden, um die Zeilenumbrüche entsprechend einzufügen.Zudem wurden weitere Muster identifizeirt, um unnötige Spalten zu entfernen. Das ersetzen der Zeichenketten führte jedoch in der Datei zu Fehlern, die nochmal seperat angegangen werden mussten und in der späteren Aufbereitung der Daten behoben wurden. Anschließend wurden die ursprünglichen Seperatoren durch "," ersetzt, um sie anschließend als CSV wieder einlesen zu können, da CSV-Dateien eine einfache und klare Struktur besitzen. 
+Diese beiden Dateien stellten eine besondere Herausforderung dar. Es war schwierig, beim Einlesen in R festzustellen, wo die Zeilenumbrüche gesetzt werden sollten, da kein klar erkennbares Zeichen vorhanden war. Daher musste ein spezifisches Muster identifiziert werden, um die Zeilenumbrüche entsprechend einzufügen. Zudem wurden weitere Muster identifizeirt, um unnötige Spalten zu entfernen. 
+Das ersetzen der Zeichenketten führte jedoch in der Datei zu Fehlern, die nochmal seperat angegangen werden mussten und in der späteren Aufbereitung der Daten behoben wurden. Anschließend wurden die ursprünglichen Separatoren durch "," ersetzt, um sie anschließend als CSV wieder einlesen zu können, da CSV-Dateien eine einfache und klare Struktur besitzen. 
 
 
 **T34 Funktion**
@@ -139,7 +140,7 @@ CSV- und TXT-Dateien werden gesondert eingelesen, da sich letztere als komplizie
 ##Einlesen der Einzelteil CSV-Dateien und speichern in der Liste "list_of_parts"
 Der folgende Code durchläuft alle Dateien in unserem Datenordner. Wenn eine Datei geprüft wird, die nicht Teil unserer Suchgruppe ist, wird eine entsprechende Meldung erzeugt. Es unterscheidet auch zwischen Separator ";" und ",". 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 # Erstellung Vektor mit Dokumentennamen 
 file_list_csv <- list.files(folder_path,pattern="*.csv")
@@ -176,7 +177,7 @@ for(file in file_list_csv){
 
 Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen korrigiert werden mussten. Bei Einzeilteil_T31.txt musste man zuerst die Separatoren zu einem lesbaren Format wechseln. Dafür wurde die Funktion str_replace_all() genutzt. T31 hatte auch spezielle Charaktere () die speziell behandelt wurden mit einem erneuten str_replace_all().
 
-```{r warning=FALSE}
+```{r, warning=FALSE, message=FALSE}
 
 # Erstellung Vektor mit Dokumentennamen 
 file_list_txt <- list.files(folder_path,pattern="*.txt")
@@ -188,7 +189,7 @@ for(file in file_list_txt){
     if(file == "Einzelteil_T31.txt"){
       data <- readLines(full_path)
       
-      # Ersetze Seperatoren und füge Zeilenumbruch ein 
+      # Ersetze Separatoren und füge Zeilenumbruch ein 
       data <- str_replace_all(data, pattern = "  ", replacement = ";")
       data <- str_replace_all(data, pattern = "", replacement = "\n")
       
@@ -241,7 +242,7 @@ list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 Es wird dasselbe Verfahren wie im vorangegangenen Codeblock angewandt, diesmal jedoch auf der Ebene der Komponenten. 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 komponenten_li <- c("Komponente_K4.csv", "Komponente_K5.csv", "Komponente_K6.csv", "Komponente_K7.txt")
 
@@ -296,7 +297,7 @@ for(file in file_list){
 
 ## Einlesen der Fahrzeugdateien
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
 car_be_li <- c("Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
 
@@ -337,7 +338,7 @@ for(file in file_list){
 
 ## Einlesen der Geodaten
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
 
@@ -371,7 +372,7 @@ for(file in file_list){
 ## Einlesen der OEM-Werke
 Für das Einlesen der OEM-Werke wurden ausschließlich die Tier1 Werke betrachtet, da nur diese für unsere Analyse von Relevanz sind. 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 OEM_li <- c("OEM_Werke_2017-07-04_TrR.csv")
 
@@ -849,7 +850,7 @@ B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
 ```
 
 ### OEM Werke
-XXFür ValentinXX
+Die OEM_Werke Datei wurde mit der Standard-Funktion, cleaner(), gesäubert. Nach Prüfung des "sauberen" Dataframes, wurde festgestellt, dass die Spalte "Werk" ein "O" vor den Zahlen enthielt. Um dieses zu entfernen, wurde eine gsub-Funktion verwendet. Schließlich wurden die Spalten umbenannt, um die Unterscheidung mit anderen Spalten in der verbundenen Datenbank zu erleichtern. 
 ```{r}
 cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
 
@@ -857,13 +858,12 @@ OEMs <- cleandata[!is.na(cleandata$ORT), ]
 OEMs$Werk <- sub("^O", "", OEMs$Werk)
 
 OEMs <- OEMs %>%
-  rename(Postleitzahl = PLZ ) %>%
   rename(OEM_Breitengrad = Breitengrad) %>%
   rename(OEM_Laengengrad = Laengengrad) %>%
   rename(OEM_Ort = ORT) %>%
   mutate(Werk = as.numeric(Werk)) %>%
   rename(Fahrzeug_Werksnummer = Werk) %>%
-  rename(OEM_Postleitzahl = Postleitzahl)
+  rename(OEM_Postleitzahl = PLZ)
 
 ```
 
@@ -1355,3 +1355,23 @@ server <- function(input, output, session) {
 ```{r, eval=FALSE, include=TRUE}
 shinyApp(ui, server)
 ```
+
+## Ergebnisse
+In diesem letzten Abschnitt zeigen wir den resultierenden Inhalt unserer Shiny App und schließen mit einer Diskussion der Ergebnisse ab. 
+
+### Heatmap
+Die Heatmap erlaubt es dem Nutzer, sich auf der Deutschlandkarte zu bewegen, um zu sehen, wo sich die am meisten betroffenen Autos befinden. Die Heatmap ist interaktiv und der Nutzer kann nach Belieben hinein- und herauszoomen.
+
+### Produktionsmengen
+Im zweiten Tab können die Fahrzeuglhersteller der 4 OEM-Werke für jeden beliebigen Zeitraum die Anzahl der in diesem Zeitraum produzierten Fahrzeuge mit Mängeln überprüfen. Der Hersteller kann diese Informationen auf der Ebene der Komponenten oder der Einzelteile überprüfen. Die Grafik zeigt dann die Anzahl der betroffenen Fahrzeuge von jedem OEM Werk, das Histogramm ist auch nach dem betroffenen Bauteil oder Einzelteil gefärbt. 
+
+### Nutzungsdauervergleich
+Im Nutzungsdauer - Vergleich Tab können zwei Gemeinden ausgewählt werden und damit werden zwei Boxplots generiert zum Vergleich der reklamierten Karosserieteile der jeweiligen Gemeinde. Die Boxplots sind interaktiv, wenn man mit dem Mauszeigerdarüber fahren, werden weitere nützliche Daten angezeigt, wie zum Beispiel der Maximalwert, Minimalwert, Median...
+
+### Fahrzeugsuche
+In diesem Tab kann ein Fahrzeughalter durch seine Fahrzeug-ID prüfen ob sein Auto betroffen ist. 
+
+### Datensatztabelle
+Schließlich wird auf diesem Tab der endgültige Dataframe, oder "Datenbank", wie wir sie genannt haben, angezeigt. 
+
+### Ergebnissdiskussion
