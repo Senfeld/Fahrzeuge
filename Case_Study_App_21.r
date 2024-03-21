@@ -123,11 +123,10 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  #Reduzierung der Datenbank auf nur fehlerhafte Teile
   Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & 
                                           is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & 
-                                          rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
-  
-  Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+                                          rowSums(is.na(Große_Datenbank[,30:67])) == ncol(Große_Datenbank[,30:67])),]
   
   # Ersetze "," durch "." und konvertiere dann in Numeric
   Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
@@ -136,6 +135,15 @@ server <- function(input, output, session) {
   Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
   Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
   
+  #Gruppierung nach Gemeinden 
+  Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>% 
+    group_by(Gemeinde) %>% 
+    summarize(Anzahl_Fehler = n(),
+              Laengengrad = first(Laengengrad),  
+              Breitengrad = first(Breitengrad),
+              Postleitzahl = first(Postleitzahl))
+  
+  Gemeinde_Fehler_Häufigkeit <- na.omit(Gemeinde_Fehler_Häufigkeit)
   
   # Karte rendern
   output$map <- renderLeaflet({
@@ -152,12 +160,7 @@ server <- function(input, output, session) {
       setView(lng = 10.4515, lat = 51.1657, zoom = 6)
   })
   
-  
-  
-  
   observeEvent(input$Balkendiagramm_generieren, {
-    
-    
     # Produktionsmenge Histogramm
     # Generate histogram based on filtered data
     filtered_data <- reactive({
@@ -202,7 +205,6 @@ server <- function(input, output, session) {
       }
     })
   })
-  
   
   # Tabelle mit den Daten
   ## Filtern und formatieren der Daten
