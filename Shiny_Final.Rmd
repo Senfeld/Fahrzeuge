@@ -36,7 +36,7 @@ In der UI wird die Bedienoberfläche für den Nutzer eingestellt. Die Hintergrun
 
 # UI
 ui <- fluidPage(
-  titlePanel(span(img(src = "www\\autos.png", alt = "Mein Logo", height = "50px"),"Datenanalyse")),
+  titlePanel(title = div(img(src = "https://seeklogo.com/images/T/tu-berlin-logo-7A5917B47A-seeklogo.com.png", alt = "Mein Logo", height = "50px"),"Datenanalyse")),
   tags$head(
     tags$style(HTML("
       body {
@@ -59,7 +59,7 @@ ui <- fluidPage(
           tags$style(HTML("
             #search_panel {
               position: absolute;
-              top: 180px; /* Anpassen der Position nach Bedarf */
+              top: 200px; /* Anpassen der Position nach Bedarf */
               left: 85px; /* Anpassen der Position nach Bedarf */
               z-index: 1000;
               background-color: lightsteelblue;
@@ -352,6 +352,6 @@ server <- function(input, output, session) {
 
 ####Shiny Applikation ausführen
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 shinyApp(ui, server)
 ```
