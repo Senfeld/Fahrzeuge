@@ -1001,16 +1001,16 @@ for(Einzelteil in names(list_of_parts_clean)){
 Für die Auswertung wurde eine zweite große Datennbank erstellt namens _Große_Datenbank2_, welche ausschließlich fehlerhafte Bauteile beinhaltet. Dies vereinfacht den Umgang, da sie die ursprüngliche Datenbank verkkleinert. 
 ```{r}
 
-Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
-
-Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
-
-# Ersetze "," durch "." und konvertiere dann in Numeric
-Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
-Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
-
-Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
-Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
+# Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
+# 
+# Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+# 
+# # Ersetze "," durch "." und konvertiere dann in Numeric
+# Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
+# Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
+# 
+# Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
+# Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
 
 ```
 
@@ -1020,7 +1020,7 @@ Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
 Zuerst zählen wir, wie oft fehlerhafte Autos in der jeweiligen Gemeinde vorkamen, um aus diesen Informationen die Heatmap zu erstellen. 
 
 ```{r}
-Gemeinde_Fehler_Häufigkeit <- Große_Datenbank2 %>% 
+Gemeinde_Fehler_Häufigkeit <- Große_Datenbank %>% 
   group_by(Gemeinde) %>% 
   summarize(Anzahl_Fehler = n(),
             Laengengrad = first(Laengengrad),  
@@ -1154,6 +1154,19 @@ ui <- fluidPage(
 ## Plots
 ```{r}
 server <- function(input, output, session) {
+  
+  Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & 
+                                        is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & 
+                                        rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
+
+  Große_Datenbank2 <- left_join(Große_Datenbank2, Zulassungen_Gemeinde, by="ID_Fahrzeug")
+  
+  # Ersetze "," durch "." und konvertiere dann in Numeric
+  Große_Datenbank2$Laengengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Laengengrad))
+  Große_Datenbank2$Breitengrad <- as.numeric(gsub(",", ".", Große_Datenbank2$Breitengrad))
+  
+  Große_Datenbank2$Laengengrad <- as.numeric(Große_Datenbank2$Laengengrad)
+  Große_Datenbank2$Breitengrad <- as.numeric(Große_Datenbank2$Breitengrad)
   
   
   # Karte rendern
@@ -1360,18 +1373,42 @@ shinyApp(ui, server)
 In diesem letzten Abschnitt zeigen wir den resultierenden Inhalt unserer Shiny App und schließen mit einer Diskussion der Ergebnisse ab. 
 
 ### Heatmap
-Die Heatmap erlaubt es dem Nutzer, sich auf der Deutschlandkarte zu bewegen, um zu sehen, wo sich die am meisten betroffenen Autos befinden. Die Heatmap ist interaktiv und der Nutzer kann nach Belieben hinein- und herauszoomen.
+Die Heatmap erlaubt es dem Nutzer, sich auf der Deutschlandkarte zu bewegen, um zu sehen, wo sich die am meisten betroffenen Autos befinden. Die Heatmap ist interaktiv und der Nutzer kann nach Belieben hinein- und herauszoomen. Zudem ist es dem Nutzer möglich in einem Fenster die Fahrzeug-ID einzugeben, um damit herauszufinden, ob sein Fahrzeug fehlerhaft ist. Ist dies der Fall erscheint zusätzlich ein Popup auf der Karte mit der exakten Position der Zulassung. Mit einem klick auf das Popup öffnet sich ein kleines Fenster, wo weitere wichtige Informationen zu finden sind, wie 
+
+* Fahrzeug-Herstellernummer
+* Produktionsdatum des Fahrzeugs
+* Mitteillung, was genau fehlerhaft ist - Fahrzeug, Komponente oder ein Einzelteil
+* Datum des Eintritts des Fehlers 
+* Fahrleistung des Teils bis zum eintreten des Fehlers 
+
+![Abbildung 1: Heatmap mit Suchfunktion](Zusätzliche_Dateien/Screenshot_Suche.png)
 
 ### Produktionsmengen
-Im zweiten Tab können die Fahrzeuglhersteller der 4 OEM-Werke für jeden beliebigen Zeitraum die Anzahl der in diesem Zeitraum produzierten Fahrzeuge mit Mängeln überprüfen. Der Hersteller kann diese Informationen auf der Ebene der Komponenten oder der Einzelteile überprüfen. Die Grafik zeigt dann die Anzahl der betroffenen Fahrzeuge von jedem OEM Werk, das Histogramm ist auch nach dem betroffenen Bauteil oder Einzelteil gefärbt. 
+Im zweiten Tab haben die Fahrzeughersteller der 4 OEM-Werke die Möglichkeit, die Anzahl der im gewählten Zeitraum hergestellten Komponenten oder Einzelteile zu überprüfen. Dabei können sie wählen, ob sie die Grafik für die Komponenten oder die Einzelteile einsehen möchten. Beide Grafiken sind interaktiv gestaltet. Im Balkendiagramm für die Komponenten ist es zudem möglich, den Anteil jeder einzelnen Komponente an der Gesamtmenge der im Werk hergestellten Komponenten einzusehen.
 
-### Nutzungsdauervergleich
-Im Nutzungsdauer - Vergleich Tab können zwei Gemeinden ausgewählt werden und damit werden zwei Boxplots generiert zum Vergleich der reklamierten Karosserieteile der jeweiligen Gemeinde. Die Boxplots sind interaktiv, wenn man mit dem Mauszeigerdarüber fahren, werden weitere nützliche Daten angezeigt, wie zum Beispiel der Maximalwert, Minimalwert, Median...
+![Abbildung 2: Produktionsmengen - Komponenten](Zusätzliche_Dateien/Screenshot_Produktionsmenge_Komponente.png)
 
-### Fahrzeugsuche
-In diesem Tab kann ein Fahrzeughalter durch seine Fahrzeug-ID prüfen ob sein Auto betroffen ist. 
+Im Balkendiagramm für die Einzelteile wird **nicht** angezeigt, wie viel jedes Einzelteil zum Gesamtvolumen der Produktion im Werk beiträgt.
+
+![Abbildung 2: Produktionsmengen - Einzelteile](Zusätzliche_Dateien/Screenshot_Produktionsmenge_Einzelteile.png)
+
+### Fahrleistung - Vergleich
+
+Im Tab "Fahrleistung - Vergleich" ermöglichen die Boxplots einen detaillierten Vergleich der Fahrleistung fehlerhafter Fahrzeuge zwischen zwei ausgewählten Gemeinden. Durch die visuelle Darstellung der Daten lassen sich mehrere Interpretationen ableiten: Die Position des Medians (der mittlere Wert) sowie die Länge der Box und die Position der Quartile geben einen Überblick über die zentrale Tendenz und die Streuung der Fahrleistung in jeder Gemeinde. Unterschiede in der Position des Medians zwischen den Gemeinden könnten darauf hinweisen, dass in einer Gemeinde Fahrzeuge tendenziell früher fehlerhaft werden als in der anderen. Darüber hinaus können Ausreißer außerhalb der Boxen identifiziert werden, die potenziell wichtige Einblicke in ungewöhnliche oder problematische Situationen geben könnten. Die Boxlänge sowie die Höhe der Whiskers zeigen die Streuung der Daten und können Aufschluss darüber geben, wie konsistent die Fahrleistung innerhalb jeder Gemeinde ist. Der direkte Vergleich der Boxplots ermöglicht es, signifikante Unterschiede in der Fahrleistung zwischen den Gemeinden zu erkennen, was wichtige Erkenntnisse für die Optimierung von Prozessen und die Verbesserung der Fahrzeugqualität liefern kann.
+
+
+![Abbildung 3: Vergleich der Fahrleistungen zwischen Gemeinden](Zusätzliche_Dateien/Screenshot_Nutzungsdauer_Vergleich.png)
+
 
 ### Datensatztabelle
-Schließlich wird auf diesem Tab der endgültige Dataframe, oder "Datenbank", wie wir sie genannt haben, angezeigt. 
+
+Im Tab "Daten" wird eine Übersicht über einen Teil der Rohdaten unserer Datenbank dargestellt. Nutzer können sich hier einen Überblick über die verfügbaren Daten verschaffen und deren Struktur kennenlernen. Die Daten sind in tabellarischer Form präsentiert und können eingesehen sowie durchsucht werden, um ein besseres Verständnis für die verfügbaren Informationen zu erhalten. 
+
+![Abbildung 4: Überischt der Rohdaten](Zusätzliche_Dateien/Screenschot_Daten.png)
 
 ### Ergebnissdiskussion
+Die Ergebnisse der Shiny-App bieten den OEM Werken und den Fahrzeugbesitzern eine große Auswahl an spezifischen Daten, die optimal auf die jeweilige Suchanfrage zugeschnitten sind. Die Möglichkeit, nach bestimmten Teilen oder nach Orten zu filtern, gibt einen umfassenden Überblick über die zugrunde liegenden Daten. Individuelle Rückschlüsse können so vom Kunden individuell gezogen werden. Über die Filterfunktionen lassen sich auch schnell und einfach gezielte Suchanfragen stellen. Darüber hinaus können die Daten bis auf verschiedene Ebenen (Komponente oder Einzelteile) heruntergebrochen werden. Die Darstellung ist einfach und intuitiv zu verstehen und eignet sich daher für die direkte Präsentation. 
+
+Um die Analyse zu verbessern, könnte eine Funktion implementiert werden, die es ermöglicht, den Anteil jedes Einzelteils an der Gesamtproduktion in jedem Werk anzuzeigen. Dies würde zusätzliche Einblicke in die Verteilung der Produktion geben und den Nutzern helfen, Muster und Trends besser zu erkennen. Des Weiteren wäre es vorteilhaft gewesen, die Gemeinden in der Heatmap stärker zu gruppieren, um möglicherweise herauszufinden, welches Werk am stärksten betroffen ist. Durch eine genauere Gruppierung könnten Zusammenhänge zwischen bestimmten Werken und Produktionsproblemen leichter identifiziert werden.
+
+Die Implementierung dieser Verbesserungen könnte dazu beitragen, die Aussagekraft der Analyse zu erhöhen und den Nutzern eine noch umfassendere und aussagekräftigere Darstellung der Daten zu bieten.

@@ -352,6 +352,8 @@ server <- function(input, output, session) {
 
 ####Shiny Applikation ausführen
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 shinyApp(ui, server)
 ```
+
+![Heatmap mit Suchfunktion](Zusätzliche_Dateien/Screenshot_Suche.png)
