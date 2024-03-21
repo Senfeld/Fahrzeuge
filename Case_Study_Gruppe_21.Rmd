@@ -595,10 +595,12 @@ cleaning_Komponenten <- function(Komponente){
   clean_component <- cleaner(data)
   if(Komponente %in% Gruppe1_Komponente){
     
-    clean_component <- adjust_classes(clean_component)
+    
     
     
     clean_component <- clean_component[!is.na(clean_component$ID_Karosserie), ]
+    
+    clean_component <- adjust_classes(clean_component)
     
     return(clean_component)
     
@@ -625,6 +627,7 @@ cleaning_Komponenten <- function(Komponente){
 
 cleaner <- function(data) {
     data$X <- NULL
+    data$X1 <- NULL
     data$X.1 <- NULL
     data$X.2 <- NULL
     data$X.3 <- NULL
@@ -659,6 +662,8 @@ cleaner <- function(data) {
       return(data)
     }
 }
+
+
 
 ```
 
