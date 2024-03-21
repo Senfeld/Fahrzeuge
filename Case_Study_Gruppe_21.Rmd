@@ -37,7 +37,7 @@ Eine Liste, in der die Dateien abgespeichert werden, wird ebenso initialisiert.
 ```{r}
 folder_path <- "./Data"
 
-#Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
+# Vektor, wo die für uns relevanten Einzelteile aufgelistet sind 
 our_txt <- c("Einzelteil_T31.txt","Einzelteil_T36.txt","Einzelteil_T39.txt")
 our_special_txt <- c("Einzelteil_T34.txt","Einzelteil_T35.txt")
 
@@ -53,28 +53,28 @@ col_names_v2 <- c( "","X1","ID_T36",  "Herstellernummer",  "Werksnummer",  "Fehl
 col_names_v3 <- c( "","X1","ID_T31",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
 
 
-#Dateien mit Semikolon als Seperator
+# Dateien mit Semikolon als Seperator
 semiko_sep <- c("Einzelteil_T32.csv","Einzelteil_T40.csv")
 
 
-#Erzeugung leere Liste für die Einzelteile
+# Erzeugung leere Liste für die Einzelteile
 list_of_parts <- list()
 
 
 ```
 
 ## Funktionen zum einlesen von T34 und T35
-Diese beiden Dateien stellten eine besondere Herausforderung dar, da diese keinen eindeutigen Zeilenumbruch hatten. Hier musste also ein Muster identifiziert werden, vor welches jeweils ein Zeilenumbruch eingefügt werden sollte.
+Diese beiden Dateien stellten eine besondere Herausforderung dar. Es war schwierig, beim Einlesen in R festzustellen, wo die Zeilenumbrüche gesetzt werden sollten, da kein klar erkennbares Zeichen vorhanden war. Daher musste ein spezifisches Muster identifiziert werden, um die Zeilenumbrüche entsprechend einzufügen.Zudem wurden weitere Muster identifizeirt, um unnötige Spalten zu entfernen. Das ersetzen der Zeichenketten führte jedoch in der Datei zu Fehlern, die nochmal seperat angegangen werden mussten und in der späteren Aufbereitung der Daten behoben wurden. Anschließend wurden die ursprünglichen Seperatoren durch "," ersetzt, um sie anschließend als CSV wieder einlesen zu können, da CSV-Dateien eine einfache und klare Struktur besitzen. 
 
-### T34 Funktion
-Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
-Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen. Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+
+**T34 Funktion**
 
 ```{r}
 reading_T34 <- function(data){
   
   gesamter_text <- paste(data, collapse = " ")
-
+  
+# Einfügen der Zeilenumbrüche 
 gesamter_text <- gsub("(?<!^)(\"\\d+-\\d+-\\d+-\\d+\" \\| \\| )", "\n\\1", gesamter_text, perl = TRUE)
 
 # Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
@@ -98,9 +98,8 @@ gesplitteter_text <- lapply(gesplitteter_text, function(x) {
 }
 ```
 
-### T35 Funktion
-Ersetzen der spezifischen Sequenz durch einen Zeilenumbruch (\n)
-Die Sequenz "\\\"\\d+\"\\\\\\d+\\\\" steht für eine ganze Zahl und wird durch einen Zeilenumbruch ersetzt, wobei wir die Sequenz selbst entfernen. Fügen \n vor der Sequenz ein, um den neuen Datensatz in einer neuen Zeile zu beginnen.
+**T35 Funktion**
+
 ```{r}
 reading_T35 <- function(data){
   
@@ -113,7 +112,7 @@ gesamter_text <- gsub("(?<!^)(\\\"\\d+-\\d+-\\d+-\\d+\"\\\\)", "\n\\1", gesamter
 # Aufteilen des Textes in Zeilen basierend auf den eingefügten Zeilenumbrüchen
 gesplitteter_text <- unlist(strsplit(gesamter_text, "\n"))
 
-#Entfernen Spalte "X1"
+# Entfernen Spalte "X1"
  gesplitteter_text <- lapply(gesplitteter_text, function(x) {
    sub("^\\\"X1\"\\\\", "", x)
  })
@@ -142,7 +141,7 @@ Der folgende Code durchläuft alle Dateien in unserem Datenordner. Wenn eine Dat
 
 ```{r}
 
-#Erstellung Vektor mit Dokumentennamen 
+# Erstellung Vektor mit Dokumentennamen 
 file_list_csv <- list.files(folder_path,pattern="*.csv")
 
 for(file in file_list_csv){
@@ -155,12 +154,12 @@ for(file in file_list_csv){
     if(file.exists(full_path)){
       if(file %in% semiko_sep){
         
-        #read_csv2 zum einlesen mit Semikolon-Trennzeichen 
+        # read_csv2 zum einlesen mit Semikolon-Trennzeichen 
         list_of_parts[[file]] <- read_csv2(full_path)
         
       }else{
         
-        #read_csv zum einlesen mit Komma-Trennzeichen 
+        # read_csv zum einlesen mit Komma-Trennzeichen 
         list_of_parts[[file]] <- read_csv(full_path) 
         }
     }
@@ -179,7 +178,7 @@ Die .txt Dateien auf Einzelteilebene hatten mehrere Fehler die ür das einlesen 
 
 ```{r warning=FALSE}
 
-#Erstellung Vektor mit Dokumentennamen 
+# Erstellung Vektor mit Dokumentennamen 
 file_list_txt <- list.files(folder_path,pattern="*.txt")
 
 for(file in file_list_txt){
@@ -189,11 +188,11 @@ for(file in file_list_txt){
     if(file == "Einzelteil_T31.txt"){
       data <- readLines(full_path)
       
-      #Ersetze Seperatoren und füge Zeilenumbruch ein 
+      # Ersetze Seperatoren und füge Zeilenumbruch ein 
       data <- str_replace_all(data, pattern = "  ", replacement = ";")
       data <- str_replace_all(data, pattern = "", replacement = "\n")
       
-      #Füge Datei der Liste hinzu 
+      # Füge Datei der Liste hinzu 
       list_of_parts[[file]] <- read.table(text = data, sep = ";", header = FALSE, skip = 1, stringsAsFactors = FALSE, col.names = col_names_v3)
       
     }
@@ -233,7 +232,7 @@ for(file in file_list_txt){
   
 }
 
-#Sortieren der Liste nach Namen 
+# Sortieren der Liste nach Namen 
 list_of_parts <- list_of_parts[order(names(list_of_parts))]
 
 ```
@@ -250,7 +249,7 @@ bestandteilek_li <- c("Bestandteile_Komponente_K4.csv", "Bestandteile_Komponente
 
 col_names <- c("","X1","ID_Karosserie",  "Herstellernummer",  "Werksnummer",  "Fehlerhaft",  "Fehlerhaft_Datum" , "Fehlerhaft_Fahrleistung",  "Produktionsdatum_Origin_01011970",  "origin")
 
-#Erzeugung leere Liste für die Komponenten
+# Erzeugung leere Liste für die Komponenten
 list_of_components <- list()
 list_of_bestandcomponents <- list()
 
@@ -274,12 +273,12 @@ for(file in file_list){
         
       }else if(file=="Komponente_K4.csv" | file=="Komponente_K6.csv"){
         
-        #read_csv zum einlesen mit Komma-Trennzeichen 
+        # read_csv zum einlesen mit Komma-Trennzeichen 
         list_of_components[[file]] <- read_csv2(full_path) 
       }
       else {
         
-        #read_csv zum einlesen mit Komma-Trennzeichen 
+        # read_csv zum einlesen mit Komma-Trennzeichen 
         list_of_components[[file]] <- read_csv(full_path) 
       }
     }
@@ -301,7 +300,7 @@ for(file in file_list){
 car_li <- c("Fahrzeuge_OEM1_Typ11.csv", "Fahrzeuge_OEM1_Typ12.csv", "Fahrzeuge_OEM2_Typ21.csv", "Fahrzeuge_OEM2_Typ22.csv")
 car_be_li <- c("Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "Bestandteile_Fahrzeuge_OEM2_Typ22.csv")
 
-#Erzeugung leere Liste für die Komponenten
+# Erzeugung leere Liste für die Komponenten
 list_of_cars <- list()
 list_of_cars_be <- list()
 
@@ -342,7 +341,7 @@ for(file in file_list){
 
 geo_li <- c("Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv", "Zulassungen_alle_Fahrzeuge.csv")
 
-#Erzeugung leere Liste für die Geodaten
+# Erzeugung leere Liste für die Geodaten
 list_of_geo <- list()
 
 folder_path <- "./Data"
@@ -357,11 +356,11 @@ for(file in file_list){
     if(file.exists(full_path)){
       data <- readLines(full_path)
       
-      #Ersetze L„ngengrad mit Laengengrad
+      # Ersetze L„ngengrad mit Laengengrad
       data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
       data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
       
-      #Füge Datei der Liste hinzu 
+      # Füge Datei der Liste hinzu 
       list_of_geo[[file]] <- read.table(text = data, sep = ";", header= TRUE)
       }
     }
@@ -390,11 +389,11 @@ for(file in file_list){
     if(file.exists(full_path)){
       data <- readLines(full_path)
       
-      #Ersetze L„ngengrad mit Laengengrad
+      # Ersetze L„ngengrad mit Laengengrad
       data <- str_replace_all(data, pattern = "L„ngengrad", replacement = "Laengengrad")
       data <- str_replace_all(data, pattern = "L.ngengrad", replacement = "Laengengrad")
       
-      #Füge Datei der Liste hinzu 
+      # Füge Datei der Liste hinzu 
       list_of_OEM[[file]] <- read.table(text = data, sep = ";", header= TRUE)
       }
     }
@@ -402,44 +401,46 @@ for(file in file_list){
 
 ```
 
-# Aufbereitung und einlesung der Dateien 
-
-Das einlesen erforderte Aktionen, die dazu führten, dass die Daten zusätzlich zu ihrem standardmäßigen Durcheinander. In dieser Sektion sollen alle Fehler korrigiert werden und die Daten standardisiert werden. 
+# Datenaufbereitung
+Nachdem die Dateien importiert wurden, stellte sich heraus, dass sie keine einheitliche Struktur aufwiesen. Daher war es notwendig, die Dateien zunächst aufzubereiten, bevor mit dem Prozess des Zusammenführens in ein großes tibble begonnen werden konnte. Für diesen Zweck wurden zunächst Funktionen entwickelt, um die Einzelteile, Komponenten und Fahrzeuge zu durchlaufen und sie entsprechend vorzubereiten. 
 
 ## Funktionen für die Säuberung 
 
-Die Hauptfunktion cleaner_einzeltiel dient zur Säuberung und vereinheitlichung der einzelnen Einzelteil-Datensätze. Die Funktion unterscheidet zu welcher Subfunktion die Einzelteile zugeteilt werden müssen zur Säuberung. 
 
+### Aufbereitung der Einzelteile
+
+Die Funktion _cleaner_einzelteile_ bildet das Herzstück der Aufbereitung der Einzelteile in _list_of_parts_. Sie akzeptiert den Dateinamen aus _list_of_parts_ und unterscheidet je nach Datei, welche Bereinigung durchgeführt werden muss. Es gibt eine Unterscheidung zwischen den Einzelteilen T34/T35 und den übrigen Einzelteilen der Liste, da diese aufgrund von Fehlern, die beim Importieren aufgetreten sind, einer speziellen Aufbereitung bedürfen. Auch zwischen den übrigen Einzelteilen wurde je nach Struktur der Dateien differenziert. Zudem wurden alle **nicht** fehlerhaften Einzelteile entfernt, um Speicher zu sparen sowie die Auswertung zu vereinfachen.  
 ```{r}
 
 cleaner_einzelteile <- function(Einzelteil){
   
-  #Speichern des Inhalts 
+  # Speichern des Inhalts 
   data <- list_of_parts[[Einzelteil]]
   
   if(Einzelteil %in% clean_T34_T35){
     
     clean_data <- cleaning_T34_T35(Einzelteil, data)
-     
-     clean_data <- adjust_classes(clean_data)
+    
+    clean_data <- adjust_classes(clean_data)
     
     return(clean_data)
   }
   
   else{
 
-    #Löschen der ersten beiden Spalten
+    # Löschen der ersten beiden Spalten
     data <- data[,-c(1,2)]
     
-    #Reparieren der Spaltennamen 
+    # Restrukturierung der Dateien 
     clean_data <- cleaning_other(data)
     
     if(Einzelteil %in% Gruppe1){
     
-     #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
+     # Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben    
       clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
       clean_data <- clean_data[!is.na(clean_data[1]),]
      
+     # Umbenennung von Spalten und weitere Restrukturierung 
      clean_data <- clean_data %>%
        rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
         select(names(clean_data[1]), Produktionsdatum, everything())
@@ -453,9 +454,10 @@ cleaner_einzelteile <- function(Einzelteil){
       
     }else if(Einzelteil %in% Gruppe2){
       
-      #Entfernt Spalten so, dass am Ende nur noch Fehlerhafte Teile übrig bleiben
+      
       clean_data <- clean_data[!is.na(clean_data$Fehlerhaft_Datum),]
       clean_data <- clean_data[!is.na(clean_data[1]),]
+      
       clean_data <- adjust_classes(clean_data)
       
       return(clean_data)
@@ -466,9 +468,9 @@ cleaner_einzelteile <- function(Einzelteil){
 
 ```
 
-### Generische Einzelteile
+#### Restrukturierung der Einzelteile
 
-Folgende Funktion, cleaning_other(), dient zur Säuberung aller Einzelteile bis auf T34 und T35, welche eine separate Funktion haben. Diese Funktion ist eingebaut in der Hauptfunktion cleaner_einzelteile().
+Die Funktion _cleaning_other_ ist zuständig für die Restrukturierung aller Einzelteile bis auf T34 und T35. Hier wird konkret geschaut, wie viele Spalten vorhanden sind, um die Datei je nachdem anders umzubauen.  
 
 ```{r}
 
@@ -518,9 +520,10 @@ cleaning_other <- function(data){
 
 ```
 
-### Spezialfälle T34 und T35
+####Säuberung der Spezialfälle T34 und T35
 
-Spaltennamen umbennen, hier wird Spalte 9, die 1 heißt umbenannt zu "Unsinn", da man diese sonst nicht einfach löschen könnte. Verschieben der Spalte "Produktionsdatum" auf zweite Position.
+Wie bereits erwähnt, sind beim imporiteren der Einzelteile T34 und T35 Fehler entstanden, wodruch diese eine gesonderten Säuberung benötigen.  
+Beispielsweise entstand die Spalte _1_ in T34, die nicht einfach aufgerufen werden konnte mit _$_. Deshlab musste diese erstmal umbenannte werden, damit sie entfernt werden konnte. Zudem wurden hier, wie zuvor in den anderen Einzelteilen, NA entfernt.  
 
 ```{r}
 cleaning_T34_T35 <- function(Einzelteil,data){
@@ -534,15 +537,14 @@ cleaning_T34_T35 <- function(Einzelteil,data){
             Unsinn = 9) %>%
       select(ID_T34, Produktionsdatum, everything())
 
-  #Spalte in Datumformat bringen - besprechen, ob origin-Spalte genutzt werden muss
   T34_clean$Produktionsdatum <- as.Date(T34_clean$Produktionsdatum, origin = "1970-01-01")
   
-  #Restliche Spalten löschen
+  #R estliche Spalten löschen
   T34_clean$...10 <- NULL
   T34_clean$Unsinn <- NULL 
   T34_clean$`origin"1`<- NULL 
   
-  #Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
+  # Entfernt alle Zeilen, die nicht Fehlerhafte Bauteile enthalten 
   T34_clean <- T34_clean[!is.na(T34_clean$Fehlerhaft_Datum),]
   T34_clean <- T34_clean[!is.na(T34_clean$ID_T34),]
     
@@ -552,10 +554,10 @@ cleaning_T34_T35 <- function(Einzelteil,data){
     
     T35_clean <- data
 
-    #entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
+    # Entfernt in der Spalte den "Zahl" character an einigen Dezimalzahlen 
     T35_clean$Fehlerhaft_Fahrleistung.x <- str_replace_all(T35_clean$Fehlerhaft_Fahrleistung.x, '\"[0-9]+\"', '')
    
-    #Umbennenung der Spalten 
+    # Umbenennung der Spalten 
     T35_clean <- T35_clean %>% 
        rename(ID_T35 = ID_T35.x,
               Produktionsdatum = Produktionsdatum.x,
@@ -583,10 +585,29 @@ cleaning_T34_T35 <- function(Einzelteil,data){
   
 ```
 
-### Komponentenebene
+#### Anpassung der Spaltenklassen 
 
-Die Säuberung der Komponentenebene erwies sich als einfacher. Es wurde entschieden eine Funktion, cleaner(), nur für Komponenten zu schreiben. 
+Diese Funktion passt die Klassen der Spalten im Dataframe an. Sie konvertiert bestimmte Spalten in das Datumsformat, bestimmte Spalten in das Zeichenformat und bestimmte Spalten in das numerische Format. Dies ist notwendig um später die verschiedenen Dataframes zu joinen und Fehler in Berechnungen zu vermeiden.
 
+```{r}
+
+adjust_classes <- function(df) {
+  # Anpassung der Klassen 
+  df <- df %>%
+    mutate(across(c(Produktionsdatum, Fehlerhaft_Datum), as.Date),
+           across(names(df[1]), as.character),
+           across(c(Herstellernummer, Werksnummer, Fehlerhaft,Fehlerhaft_Fahrleistung), as.numeric))
+  return(df)
+}
+
+```
+
+### Aufbereitung der Komponenten und Fahrzeuge  
+
+Die Aufbereitung der Komponenten- und Fahrzeugebene erwies sich als einfacher. Wie für die Einzelteile wurde für die Komponenten und Fahrzeuge eine Funktion geschrieben, die die Aufbereitung durchführt. Die Logik für _cleaning_Komponenten_ und _cleaning_cars_ entspricht der von _cleaner_einzelteile_. 
+
+
+**Aufbereitung der Komponenten** 
 ```{r}
 cleaning_Komponenten <- function(Komponente){
   
@@ -624,7 +645,45 @@ cleaning_Komponenten <- function(Komponente){
   
   
 }
+```
 
+
+**Aufbereitung der Fahrzeuge** 
+```{r}
+cleaning_cars <- function(Fahrzeug){
+  
+  data <- list_of_cars[[Fahrzeug]]
+  clean_car <- cleaner(data)
+  
+  if(Fahrzeug %in% Gruppe1_Autos){
+
+    clean_car <- adjust_classes(clean_car)  
+
+    return(clean_car)
+
+  }else if(Fahrzeug %in% Gruppe2_Autos){
+
+    clean_car <- clean_car %>%
+      rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
+        select(names(clean_car[1]), Produktionsdatum, everything())
+
+    clean_car$Produktionsdatum <-  as.Date(clean_car$Produktionsdatum, origin = "1970-01-01")
+
+    clean_car$origin <- NULL
+
+    clean_car <- adjust_classes(clean_car)
+
+    return(clean_car)
+  }
+}
+
+```
+
+#### Weitere Funktion zur Restrukturierung 
+
+Diese Funktion ist nahezu identisch zur Funktion _cleaning_other_ und verfolgt das selbe Ziel. Man hätte beide zusammenführen können, um eine Funktion für alle Ebenen zu schreiben. 
+
+```{r}
 cleaner <- function(data) {
     data$X <- NULL
     data$X1 <- NULL
@@ -663,90 +722,47 @@ cleaner <- function(data) {
     }
 }
 
-
-
-```
-
-### Fahrzeugebene
-
-```{r}
-cleaning_cars <- function(Fahrzeug){
-  
-  data <- list_of_cars[[Fahrzeug]]
-  clean_car <- cleaner(data)
-  
-  if(Fahrzeug %in% Gruppe1_Autos){
-
-    clean_car <- adjust_classes(clean_car)  
-
-    return(clean_car)
-
-  }else if(Fahrzeug %in% Gruppe2_Autos){
-
-    clean_car <- clean_car %>%
-      rename(Produktionsdatum = Produktionsdatum_Origin_01011970,) %>%
-        select(names(clean_car[1]), Produktionsdatum, everything())
-
-    clean_car$Produktionsdatum <-  as.Date(clean_car$Produktionsdatum, origin = "1970-01-01")
-
-    clean_car$origin <- NULL
-
-    clean_car <- adjust_classes(clean_car)
-
-    return(clean_car)
-  }
-}
-
-```
-
-### Anpassung der Spaltenklassen 
-Diese Funktion passt die Klassen der Spalten im Dataframe an. Sie konvertiert bestimmte Spalten in das Datumsformat, bestimmte Spalten in das Zeichenformat und bestimmte Spalten in das numerische Format. Dies ist notwendig um später die verschiedenen Dataframes zu joinen.
-
-```{r}
-
-adjust_classes <- function(df) {
-  # Anpassung der Klassen 
-  df <- df %>%
-    mutate(across(c(Produktionsdatum, Fehlerhaft_Datum), as.Date),
-           across(names(df[1]), as.character),
-           across(c(Herstellernummer, Werksnummer, Fehlerhaft,Fehlerhaft_Fahrleistung), as.numeric))
-  return(df)
-}
-
 ```
 
 
-## Ausführung der Einzelteil Säuberung 
+
+## Ausführung der Aufbereitung 
+
+### Einzelteile
+
+Nachdem die Funktionen gelesen wurden, konnte mit der Ausführung der Aufbereitung begonnen werden. Hierfür wurden zunächst Vorbereitungen getroffen, einschließlich der Einteilung der Dateien nach der Art und Weise der Säuberung. Nachdem die Säuberung durchgeführt wurde, wurden die Dateien erneut nach der Herstellernummer 217 gefiltert, da diese für unsere Analyse von Bedeutung ist. Abschließend wurden den Spaltennamen jedes Einzelteils die Nummer des Einzelteils angefügt, um später beim Zusammenführen aller Dateien Dopplungen in den Spaltennamen zu vermeiden. 
 
 ```{r}
 
 list_of_parts_clean <- list()
 n <- 30 
 
-#Gruppierung nach benötigter Säuberung 
+# Gruppierung nach benötigter Säuberung 
 clean_T34_T35 <- c("Einzelteil_T34.txt", "Einzelteil_T35.txt")
 
-#Gruppe1 sind die Dateien mit 10 == Spalten 
+# Gruppe1 sind die Dateien mit 10 == Spalten 
 Gruppe1 <- c("Einzelteil_T31.txt","Einzelteil_T33.csv","Einzelteil_T36.txt","Einzelteil_T37.csv","Einzelteil_T40.csv")
 
-#Gruppe1 sind die Dateien mit 16 <= Spalten
+# Gruppe1 sind die Dateien mit 16 <= Spalten
 Gruppe2 <- c("Einzelteil_T30.csv","Einzelteil_T32.csv","Einzelteil_T38.csv","Einzelteil_T39.txt")
 
 cols <- c("Produktionsdatum","Herstellernummer", "Werksnummer","Fehlerhaft","Fehlerhaft_Datum","Fehlerhaft_Fahrleistung")
 
-  list_of_parts_clean <- setNames(
-    lapply(names(list_of_parts), function(Einzelteil) {
-        cleaner_einzelteile(Einzelteil)
-    }),
-    names(list_of_parts)
-  )
+# Ausführung Säuberung 
+list_of_parts_clean <- setNames(
+  lapply(names(list_of_parts), function(Einzelteil) {
+      cleaner_einzelteile(Einzelteil)
+  }),
+  names(list_of_parts)
+)
+# Filterung nach Herstellernummer 217
+list_of_parts_clean <- lapply(list_of_parts_clean, function(df) {
+                          filter(df, Herstellernummer == 217)
+                        })
   
-  list_of_parts_clean <- lapply(list_of_parts_clean, function(df) {
-  filter(df, Herstellernummer == 217)
-})
-  
-  list_of_parts_clean <- Filter(function(x) nrow(x) > 0, list_of_parts_clean)
+list_of_parts_clean <- Filter(function(x) nrow(x) > 0, list_of_parts_clean)
 
+# Hinzufügen der Einzelteilnummer zu jeder Spalte des Einzelteils 
 for (Einzelteil in names(list_of_parts_clean)) { 
   
   list_of_parts_clean[[Einzelteil]] <- list_of_parts_clean[[Einzelteil]] %>% 
@@ -759,9 +775,9 @@ for (Einzelteil in names(list_of_parts_clean)) {
 
 ```
 
-## Ausführung der Komponenten Säuberung 
+### Komponenten 
 
-Es wird das gleiche Verfahren wie bei den Einzelteilen angewandt, diesmal jedoch auf der Ebene der Komponenten. Für die Komponentenebene gibt es zusätzliche Dateien mit der Bezeichnung "Bestandteile". Diese Dateien werden später verwendet, um die verschiedenen Ebenen miteinander zu verbinden.
+Das gleiche Verfahren wie bei den Einzelteilen wird nun auf der Ebene der Komponenten angewandt. Zusätzlich zu den Komponenten und Fahrzeugen gibt es auch Dateien mit der Bezeichnung "Bestandteile" auf der Komponenten- und Fahrzeugebene. Diese Dateien werden später verwendet, um die verschiedenen Ebenen miteinander zu verbinden.
 
 ```{r}
 Gruppe1_Komponente <- c("Komponente_K4.csv","Komponente_K5.csv")
@@ -797,29 +813,19 @@ K7_Best <- K7_Best %>%
 
 ```
 
-## Ausführung der Fahrzeug Säuberung 
+### Fahrzeuge
 
 ```{r, message=FALSE, warning=FALSE}
 list_of_cars_clean <- list()
 
-Fahrzeuge_full <- tibble(
-  ID_Fahrzeug = character(),
-  Produktionsdatum = as.Date(NA),
-  Herstellernummer = numeric(),
-  Werksnummer = numeric(),
-  Fehlerhaft = numeric(),
-  Fehlerhaft_Datum = as.Date(NA),
-  Fehlerhaft_Fahrleistung = numeric()
-)
-
 Gruppe1_Autos <- c("Fahrzeuge_OEM1_Typ11.csv","Fahrzeuge_OEM1_Typ12.csv")
 Gruppe2_Autos <- c("Fahrzeuge_OEM2_Typ21.csv","Fahrzeuge_OEM2_Typ22.csv")
+
 
 for(Fahrzeug in names(list_of_cars)){
   
   list_of_cars_clean[[Fahrzeug]] <- cleaning_cars(Fahrzeug)
   
-  Fahrzeuge_full <- full_join(Fahrzeuge_full,list_of_cars_clean[[Fahrzeug]])
 }
 
 #Säuberung Bestandteile Fahrzeuge
@@ -842,8 +848,8 @@ B_OEM2_22 <- cleandata[!is.na(cleandata$ID_Fahrzeug), ]
 
 ```
 
-## Ausführung der OEM Werk Säuberung
-
+### OEM Werke
+XXFür ValentinXX
 ```{r}
 cleandata <- cleaner(list_of_OEM$"OEM_Werke_2017-07-04_TrR.csv")
 
@@ -861,7 +867,7 @@ OEMs <- OEMs %>%
 
 ```
 
-## Ausführung der Geodaten Säuberung
+### Geodaten 
 
 ```{r}
 cleandata <- cleaner(list_of_geo$"Geodaten_Gemeinden_v1.2_2017-08-22_TrR.csv")
@@ -875,9 +881,13 @@ Zulassungen <- Zulassungen %>%
   rename(Gemeinde = Gemeinden)
 ```
 
-# Joining der Dataframes 
+# Erstellen des finalen Datensatzes 
 
-## Komponenten 
+## Komponenten, Fahrzeuge und Bestandteile
+
+Für die Komponenten, die Fahrzeuge und die jeweiligen Bestandteile läuft das Zusammenführen nahezu identisch ab. Es wird zuerst ein _full_join_ genutzt, um am Ende ein tibble zu erhalten, welches beispielsweise alle Komponenten beinhaltet. 
+
+### Komponenten 
 
 ```{r, message=FALSE, warning=FALSE}  
 
@@ -914,9 +924,25 @@ Komponenten_full_be <- full_join(Komponenten_full_be,K7_Best)
 
 ```
 
-## Fahrzeuge
+### Fahrzeuge
 
 ```{r, message=FALSE, warning=FALSE}  
+
+Fahrzeuge_full <- tibble(
+  ID_Fahrzeug = character(),
+  Produktionsdatum = as.Date(NA),
+  Herstellernummer = numeric(),
+  Werksnummer = numeric(),
+  Fehlerhaft = numeric(),
+  Fehlerhaft_Datum = as.Date(NA),
+  Fehlerhaft_Fahrleistung = numeric()
+)
+
+for(Fahrzeug in names(list_of_cars)){
+  
+  Fahrzeuge_full <- full_join(Fahrzeuge_full,list_of_cars_clean[[Fahrzeug]])
+  
+}
 
 Fahrzeuge_full_be <- tibble(
   ID_Karosserie = character(),
@@ -958,7 +984,7 @@ Komponenten <- left_join(Komponenten_full,Komponenten_full_be,by="ID_Komponente"
 ```
 
 ## Erstellung der Großen Datenbank
-
+Hier werden die tibble zusammengeführt um das die Große Datenbank zu erstellen.
 ```{r}
 
  Große_Datenbank <- left_join(Fahrzeuge, OEMs, by="Fahrzeug_Werksnummer")
@@ -971,8 +997,8 @@ for(Einzelteil in names(list_of_parts_clean)){
 
 ```
 
-## Letzte Vorbereitungen
-
+## Erstellung der zweiten großen Datenbank 
+Für die Auswertung wurde eine zweite große Datennbank erstellt namens _Große_Datenbank2_, welche ausschließlich fehlerhafte Bauteile beinhaltet. Dies vereinfacht den Umgang, da sie die ursprüngliche Datenbank verkkleinert. 
 ```{r}
 
 Große_Datenbank2 <- Große_Datenbank[!(is.na(Große_Datenbank$Fahrzeug_Fehlerhaft_Datum) & is.na(Große_Datenbank$Komponente_Fehlerhaft_Datum) & rowSums(is.na(Große_Datenbank[,30:ncol(Große_Datenbank)])) == ncol(Große_Datenbank[,30:ncol(Große_Datenbank)])),]
